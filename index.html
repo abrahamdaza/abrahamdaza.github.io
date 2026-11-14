@@ -157,7 +157,7 @@
       <button id="missions">📜 MISIONES</button>
       <button id="avatarBtn">👕 AVATAR</button>
       <button id="spinBtn">🎁 RULETA</button>
-      <button id="boxBtn">📦 CAJAS</button>
+      <button id="boxBtn" class="hidden">📦 CAJAS</button>
       <button id="rankBtn" style="background:linear-gradient(90deg,#ffb020,#ffd84f);color:#2a1a00">🏆 TOP 20</button>
       <span id="keyCount" style="align-self:center;font-weight:800;font-size:20px;color:#ffd84f;padding:0 10px;text-shadow:0 2px 6px rgba(0,0,0,.7)"></span>
     </div>
@@ -3945,7 +3945,6 @@ function endMatch(){
   html+= win ? `<br><br><b style="font-size:22px;color:${levelColor(profile.level)}">⭐ ¡SUBISTE AL NIVEL ${profile.level}!</b>` : `<br><br>Sigues en el nivel <b style="color:${levelColor(profile.level)}">${profile.level}</b>. ¡Gana para subir!`;
   html+=`<br><br>Tienes <b style="color:#ffd84f">${profile.keys} 🔑</b> para gastar en la Armería.`;
   if(maybeGiftSpin(win)) html+=`<br><br><b style="font-size:22px;color:#ff7ab8">🎁 ¡SORPRESA! Te regalaron una ruleta</b>`;
-  if(maybeGiftBox(win)) html+=`<br><b style="font-size:22px;color:#ffb020">📦 ¡SORPRESA! Te regalaron una caja</b>`;
   document.getElementById('overText').innerHTML=html; refreshSpins(); refreshBoxes();
   document.getElementById('toEditor').classList.toggle('hidden',!fromEditor);
   document.getElementById('over').classList.remove('hidden');
@@ -5253,7 +5252,7 @@ function doSpin(){ if(spinBusy||!(profile.spins>0)) return; profile.spins--; sav
 // ---- cajas sorpresa: puede venir un arma normal (no de las mejores) ----
 let boxFrom='menu', boxBusy=false;
 function maybeGiftBox(win){ if(Math.random()<(win?.35:.2)){ profile.boxes=(profile.boxes||0)+1; saveProfile(); return true; } return false; }
-function refreshBoxes(){ const n=profile.boxes||0; $('boxBtn').textContent='📦 CAJAS'+(n?` (${n})`:''); $('boxBtn').style.background=n?'linear-gradient(90deg,#8a5a2b,#ffb020)':''; $('overBox').classList.toggle('hidden',!n);
+function refreshBoxes(){ const n=profile.boxes||0; $('boxBtn').textContent='📦 CAJAS'+(n?` (${n})`:''); $('boxBtn').style.background=n?'linear-gradient(90deg,#8a5a2b,#ffb020)':''; $('overBox').classList.add('hidden'); $('boxBtn').classList.add('hidden');
   $('boxCount').textContent=n?`Tienes ${n} caja${n>1?'s':''} para abrir`:'No tienes cajas ahora. Juega partidas: ¡a veces te regalan una!'; $('boxGo').style.opacity=n?1:.4; }
 function openBox(from){ boxFrom=from; $(from).classList.add('hidden'); $('boxScr').classList.remove('hidden'); $('boxMsg').textContent=''; $('boxArt').style.animation=''; $('boxArt').innerHTML='📦'; refreshBoxes(); }
 function closeBox(){ if(boxBusy) return; $('boxScr').classList.add('hidden'); $(boxFrom).classList.remove('hidden'); refreshKeys(); refreshBoxes(); }

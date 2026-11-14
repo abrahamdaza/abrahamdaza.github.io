@@ -1317,7 +1317,7 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar":"🎁 Welcome! Here are 10 🔑 to get started","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
 "Vale":"Costs","Gratis":"Free","✅ Ya es tuya · EQUIPAR":"✅ It's yours · EQUIP","¡Equipada!":"Equipped!","No te alcanzan las llaves":"Not enough keys","Ranura":"Slot","Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility",
 "Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda":"Uses per round","⬅ VOLVER AL LOBBY":"⬅ BACK TO LOBBY","✅ TUYA":"✅ YOURS",
 "Máximo 2 amigos (3 personas hablando)":"Max 2 friends (3 people talking)","➕ Amigo":"➕ Friend","✅ Amigo":"✅ Friend","💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.":"💬🎤 Chat and voice are only with your friends (max 2). Tap ➕ Friend.",
@@ -1692,7 +1692,7 @@ try{
   const s=localStorage.getItem('duelo3d_v2');
   if(s) profile=Object.assign(profile, JSON.parse(s));
   else { // traer el progreso de la versión anterior
-    const o=localStorage.getItem('duelo3d_perfil');
+    const o=localStorage.getItem('duelo3d_perfil'); if(!o) profile.isNew=true;   // jugador nuevo
     if(o){ const old=JSON.parse(o), oldNames=['Rifle de asalto','Escopeta','Francotirador','Subfusil','Ráfaga','Revólver','Ballesta','Escopeta corta','Minigun','Lanzacohetes','Rayo láser'];
       profile.keys=old.keys||0; profile.stats=old.stats||{}; profile.done=old.done||[];
       for(const i of (old.unlocked||[])) if(oldNames[i]&&!profile.unlocked.includes(oldNames[i])) profile.unlocked.push(oldNames[i]); }
@@ -1708,6 +1708,8 @@ if(!profile.unlocked.includes('Puños')) profile.unlocked.push('Puños');
 if(!profile.level) profile.level=1;
 for(const sl of SLOTS){ const w=WEAPONS[profile.loadout[sl]]; if(!w||w.slot!==sl||!profile.unlocked.includes(w.name)) profile.loadout[sl]=FREE[sl]; }
 function saveProfile(){ try{ localStorage.setItem('duelo3d_v2', JSON.stringify(profile)); }catch(e){} }
+// regalo de bienvenida: cada jugador nuevo recibe 10 llaves (una sola vez)
+if(profile.isNew&&!profile.welcomeGift){ profile.keys=(profile.keys||0)+10; profile.welcomeGift=true; profile.welcomeShow=true; delete profile.isNew; saveProfile(); }
 let toasts=[], matchDone=[], roundKills=0, matchKeys=0, roundTime=0, suddenShown=false;
 const ROUND_MAX=90;   // 1 minuto y 30 segundos por ronda
 function giveKeys(n){ profile.keys+=n; matchKeys+=n; saveProfile(); }
@@ -4569,6 +4571,7 @@ function goLobby(){
   setWorld(1200,750); applyTheme('default');
   if(!lobbyGroup.children.length) buildLobby();
   loadMap(LOBBY_MAP); WALLS.push({t:'block',x:0,y:445,w:232,h:24},{t:'block',x:0,y:577,w:232,h:24}); setArenaVisible(false); inLobby=true; uiOpen=false;
+  if(profile.welcomeShow){ toasts.push({txt:'🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar',life:5}); [523,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12,'sine',.07),i*90)); profile.welcomeShow=false; saveProfile(); }
   if(profile.refund){ toasts.push({txt:'Se quitó el Botiquín del juego: te devolvimos '+MEDKIT.cost+' 🔑',life:5}); profile.refund=false; saveProfile(); }
   p2=null; player=makeFighter({x:600,y:510},'#2fa8ff',false,0,'TÚ',myLook(),{...profile.loadout}); player.angle=-Math.PI/2; fighters=[player];
   state='lobby'; padT=0; curPad=null;

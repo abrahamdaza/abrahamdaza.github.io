@@ -274,6 +274,7 @@
     <button id="pauseEditor" class="hidden">Editar mapa</button>
     <button id="pauseMenu">Salir al lobby</button>
   </div>
+  <p id="pauseNote" class="hidden" style="max-width:420px;text-align:center">🔒 No puedes salir en medio de una partida. ¡Termínala! Al final podrás volver al lobby o pedir revancha.</p>
 </div>
 
 <div id="over" class="screen hidden">
@@ -285,6 +286,10 @@
     <button id="overBox" class="hidden" style="background:linear-gradient(90deg,#8a5a2b,#ffb020)">📦 Abrir caja</button>
     <button id="overSpin" class="hidden" style="background:linear-gradient(90deg,#ffb020,#ff4f8b)">🎁 Girar ruleta</button>
     <button id="toMenu">Volver al lobby</button>
+  </div>
+  <div id="rematchBox" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px">
+    <div id="rematchMsg" style="font-size:18px;font-weight:800;color:#ffd84f"></div>
+    <div class="row"><button class="go" id="rmYes">🔁 SÍ, REVANCHA</button><button id="rmNo">No, gracias</button></div>
   </div>
 </div>
 
@@ -3058,8 +3063,14 @@ document.addEventListener('pointerlockchange',()=>{
   else if(hadLock && !uiOpen && !chatOpenFlag && (state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')) pauseGame();
 });
 let pausedFrom=null;
-function pauseGame(){ pausedFrom=state; state='pause'; mouse.down=false; mouse.right=false;
-  document.getElementById('pauseEditor').classList.toggle('hidden',!fromEditor); document.getElementById('pause').classList.remove('hidden'); }
+function inMatch(st){ st=st||state; return st==='play'||st==='countdown'||st==='roundEnd'; }
+function pauseGame(){ pausedFrom=state; state='pause'; mouse.down=false; mouse.right=false; const m=inMatch(pausedFrom);
+  document.getElementById('pauseEditor').classList.toggle('hidden',!fromEditor||m);
+  document.getElementById('pauseMenu').classList.toggle('hidden',m);
+  document.getElementById('pauseNote').classList.toggle('hidden',!m);
+  document.getElementById('pause').classList.remove('hidden'); }
+// aviso si intentan cerrar la página en plena partida
+addEventListener('beforeunload',e=>{ if(inMatch()||(state==='pause'&&inMatch(pausedFrom))){ e.preventDefault(); e.returnValue=''; return ''; } });
 document.getElementById('resume').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); state=pausedFrom||'play'; requestLock(); };
 document.getElementById('pauseEditor').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); openEditor(); };
 document.getElementById('pauseMenu').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); if(pausedFrom==='lobby') goMenu(); else goLobby(); };
@@ -3139,7 +3150,7 @@ function netMe(){ return {id:NET.myId,name:($('netName').value.trim()||'Jugador'
 function netReset(){ voiceOff(true); try{ if(NET.peer) NET.peer.destroy(); }catch(e){} Object.assign(NET,{on:false,host:false,inGame:false,peer:null,conns:{},hostConn:null,myId:null,code:'',players:[]}); }
 function openNet(){ $('menu').classList.add('hidden'); $('netScr').classList.remove('hidden'); $('netStart').classList.remove('hidden'); $('netRoom').classList.add('hidden');
   $('netName').value=profile.netName||('Jugador'+Math.floor(Math.random()*90+10)); netStatus(''); netCanWork(); }
-function netRestoreOver(){ $('again').classList.remove('hidden'); $('toMenu').textContent='Volver al lobby'; }
+function netRestoreOver(){ $('again').classList.remove('hidden'); $('toMenu').classList.remove('hidden'); $('toMenu').textContent='Volver al lobby'; $('rematchBox').classList.add('hidden'); clearInterval(RM.timer); }
 function netLeave(){ netRestoreOver(); netReset(); $('netScr').classList.add('hidden'); if(state!=='menu') goMenu(); $('menu').classList.remove('hidden'); }
 function netBackToRoom(){ netRestoreOver(); NET.inGame=false; for(const f of fighters) scene.remove(f.mesh); fighters=[]; player=null; state='menu'; releaseLock();
   $('netScr').classList.remove('hidden'); netShowRoom(); if(NET.host) netBroadcastRoom(); }
@@ -3163,7 +3174,8 @@ function netJoin(){ if(!netCanWork()) return; const code=$('netCode').value.trim
   peer.on('error',e=>{ netStatus(e.type==='peer-unavailable'?'No existe una sala con el código '+code+'.':'Error de conexión: '+(e.type||e),'#ff8fa3'); }); }
 function netDrop(id){ if(!NET.host||!NET.conns[id]) return; delete NET.conns[id]; voiceDrop(id); NET.players=NET.players.filter(p=>p.id!==id);
   netSend({t:'left',id}); netOnLeft(id); if(!NET.inGame) netBroadcastRoom(); }
-function netOnLeft(id){ const f=fighters.find(x=>x.netId===id); if(f){ toasts.push({txt:f.label+' salió de la partida',life:2.5}); if(!f.dead) killed(f,f,f.weapon,true); }
+function netOnLeft(id){ if(state==='over'&&NET.inGame&&!RM.done){ RM.votes[id]=false; if(NET.host) rmCheck(); }
+  const f=fighters.find(x=>x.netId===id); if(f){ toasts.push({txt:f.label+' salió de la partida',life:2.5}); if(!f.dead) killed(f,f,f.weapon,true); }
   if(!NET.inGame) netShowRoom(); }
 function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map}); netShowRoom(); voiceSync(); }
 function netShowRoom(){ $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
@@ -3177,7 +3189,7 @@ function netShowRoom(){ $('netStart').classList.add('hidden'); $('netRoom').clas
 function netGo(){ if(!NET.host) return; if(NET.players.length<2){ netStatus('Necesitas al menos un amigo en la sala','#ff8fa3'); return; }
   if(!NET.players.some(p=>p.team===0)||!NET.players.some(p=>p.team===1)){ netStatus('Pon al menos un jugador en cada equipo','#ff8fa3'); return; }
   const map=NET.map>=0?NET.map:Math.floor(Math.random()*ARENAS.length); netSend({t:'start',players:NET.players,map}); netStartMatch(NET.players,map); }
-function netStartMatch(players,mapIdx){ NET.players=players; NET.inGame=true; $('netScr').classList.add('hidden'); $('menu').classList.add('hidden'); $('over').classList.add('hidden');
+function netStartMatch(players,mapIdx){ NET.players=players; NET.inGame=true; NET.lastMap=mapIdx; RM.done=true; clearInterval(RM.timer); $('rematchBox').classList.add('hidden'); $('netScr').classList.add('hidden'); $('menu').classList.add('hidden'); $('over').classList.add('hidden');
   chooseArena(ARENAS[mapIdx]); inLobby=false; lobbyGroup.visible=false; setArenaVisible(true); fromEditor=false; mode='online';
   matchLevels={}; setWorld(1200,750); applyTheme(arenaTheme); score={p:0,b:0}; feed=[]; matchDone=[]; matchKeys=0; netStartRound(); requestLock(); }
 function netStartRound(){
@@ -3192,9 +3204,26 @@ function netStartRound(){
   for(const b of bullets) if(b.mesh) b.mesh.visible=false; for(const t of throws) scene.remove(t.mesh); clearEffects();
   bullets=[]; throws=[]; for(const q of particles) q.mesh.visible=false; particles=[]; texts=[]; clearDebris();
   countdown=3; state='countdown'; roundTime=0; suddenShown=false; }
+// ---- revancha en línea: si todos dicen que sí, se juega otra vez; si alguien dice que no, todos vuelven a la sala ----
+const RM={votes:{},t:0,timer:null,done:false};
+function rmStart(){ RM.votes={}; RM.done=false; $('rematchBox').classList.remove('hidden'); $('again').classList.add('hidden'); $('toMenu').classList.add('hidden');
+  $('rmYes').disabled=false; $('rmNo').disabled=false; RM.t=25; rmPaint(); clearInterval(RM.timer);
+  RM.timer=setInterval(()=>{ RM.t--; rmPaint(); if(RM.t<=0){ clearInterval(RM.timer); if(NET.host&&!RM.done) rmResolve(false,'Se acabó el tiempo para la revancha'); } },1000); }
+function rmPaint(){ const n=NET.players.length, yes=Object.values(RM.votes).filter(v=>v).length;
+  $('rematchMsg').textContent=`¿Revancha? ${yes}/${n} dijeron que sí · ${Math.max(0,RM.t)} s`; }
+function rmVote(v){ if(RM.done) return; $('rmYes').disabled=true; $('rmNo').disabled=true; RM.votes[NET.myId]=v; netSend({t:'rmv',v}); rmPaint(); if(NET.host) rmCheck(); }
+function rmCheck(){ if(!NET.host||RM.done) return; const vals=NET.players.map(p=>RM.votes[p.id]);
+  if(NET.players.length<2||!NET.players.some(p=>p.team===0)||!NET.players.some(p=>p.team===1)){ rmResolve(false,'Tu rival se fue'); return; }
+  if(vals.some(v=>v===false)){ const who=NET.players.find(p=>RM.votes[p.id]===false); rmResolve(false,(who?who.name:'Alguien')+' no quiso revancha'); }
+  else if(vals.every(v=>v===true)) rmResolve(true); }
+function rmResolve(yes,why){ RM.done=true; clearInterval(RM.timer);
+  if(NET.host){ netSend({t:'rmr',yes,why}); }
+  $('rematchBox').classList.add('hidden'); $('toMenu').classList.remove('hidden');
+  if(yes){ chatSys('¡Revancha! Todos dijeron que sí'); if(NET.host){ const map=NET.lastMap; netSend({t:'start',players:NET.players,map}); netStartMatch(NET.players,map); } }
+  else { toasts.push({txt:'🚪 '+(why||'No hubo revancha')+'. Vuelven a la sala.',life:3}); chatSys((why||'No hubo revancha')+'. Vuelven a la sala.'); netBackToRoom(); } }
 function netRoundEnd(win){ const mine=win===player.team; if(mine) addStat('rounds'); const tUp=roundTime>=ROUND_MAX-.5;
   state='roundEnd'; roundMsg=(tUp?'⏱️ ¡TIEMPO! ':'')+(win<0?'EMPATE':mine?'RONDA PARA TU EQUIPO':'LOS RIVALES GANAN LA RONDA'); roundMsgT=2.2;
-  setTimeout(()=>{ if(state!=='roundEnd'||!NET.inGame) return; if(score.p>=5||score.b>=5){ endMatch(); $('again').classList.add('hidden'); $('toMenu').textContent='Volver a la sala'; } else netStartRound(); },2200); }
+  setTimeout(()=>{ if(state!=='roundEnd'||!NET.inGame) return; if(score.p>=5||score.b>=5){ endMatch(); $('toMenu').textContent='Volver a la sala'; rmStart(); } else netStartRound(); },2200); }
 function netById(id){ return fighters.find(f=>f.netId===id); }
 function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw==='string'?JSON.parse(raw):raw; }catch(e){ return; }
   if(NET.host&&fromConn!=='host'){ m.from=fromConn;
@@ -3217,7 +3246,9 @@ function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw
     case 'hit': if(m.to!==NET.myId||!player||player.dead||!LIVE()) return; { const by=f; player.hp-=m.dmg; player.flinch=1; player.hurt=Math.min(1,(player.hurt||0)+.25+m.dmg/100); player.shake=Math.max(player.shake,.35); beep(150,.08,'sawtooth',.05);
       texts.push({x:player.x,y:player.y,h:player.z+2.2,txt:m.dmg,life:.6,color:'#ff8fa3'}); if(player.hp<=0) killed(player,by||player,m.wid); } break;
     case 'die': if(!f) return; killed(f,netById(m.by)||(m.by===NET.myId?player:f),m.wid,true); break;
-    case 'round': score.p=m.sc[0]; score.b=m.sc[1]; netRoundEnd(m.win); break; }
+    case 'round': score.p=m.sc[0]; score.b=m.sc[1]; netRoundEnd(m.win); break;
+    case 'rmv': RM.votes[m.from]=m.v; rmPaint(); if(NET.host) rmCheck(); break;
+    case 'rmr': if(!RM.done) rmResolve(m.yes,m.why); break; }
 }
 function netTick(dt){
   for(const f of fighters){ if(!f.remote||!f.tg) continue; const k=Math.min(1,dt*14), ox=f.x, oy=f.y;
@@ -3263,7 +3294,7 @@ function chatTick(){ const box=$('chatBox'), inRoom=NET.on&&!NET.inGame&&!$('net
   box.classList.toggle('hidden',!NET.on||!(NET.inGame||inRoom)); box.classList.toggle('room',inRoom);
   const want=inRoom?$('netRoom'):document.body; if(box.parentNode!==want) want.appendChild(box);
   $('micFloat').classList.toggle('hidden',!(NET.inGame&&(state==='play'||state==='countdown'||state==='roundEnd'))); }
-function initNet(){ initInstall();
+function initNet(){ initInstall(); $('rmYes').onclick=()=>rmVote(true); $('rmNo').onclick=()=>rmVote(false);
   $('chatIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); chatSend(); } else if(e.key==='Escape'){ e.preventDefault(); $('chatIn').value=''; chatClose(); } });
   $('chatIn').addEventListener('keyup',e=>e.stopPropagation());
   $('chatSend').onclick=chatSend; $('micBtn').onclick=voiceToggle; $('micFloat').onclick=e=>{ e.stopPropagation(); voiceToggle(); }; setInterval(chatTick,200); $('netBtn').onclick=()=>{ initAudio(); openNet(); }; $('netCreate').onclick=netCreate; $('netJoin').onclick=netJoin; $('netGo').onclick=netGo; $('netBack').onclick=netLeave;

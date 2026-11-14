@@ -14,6 +14,8 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:#0d0f1a;overflow:hidden;font-family:'Rubik',system-ui,sans-serif;color:#fff;user-select:none}
   #gl,#hud{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+  #gl{filter:contrast(1.1) saturate(1.14) brightness(.97)}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.32) 100%)}
   #hud{pointer-events:none}
   .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,12,24,.82);backdrop-filter:blur(4px);gap:16px;text-align:center;padding:20px;z-index:5}
   .hidden{display:none !important}
@@ -94,6 +96,9 @@
   #rotate button{font-size:20px;padding:14px 26px}
   body.isTouch #keysBox, body.isTouch #helpBtn{display:none !important}
   /* ---- chat ---- */
+  #micFloat{position:fixed;left:12px;bottom:100px;z-index:8;font-size:16px;padding:10px 16px;border-radius:999px;background:rgba(15,18,34,.8);border:3px solid #3ddc84;color:#fff}
+  #micFloat.on{background:#3ddc84;color:#0d0f1a;animation:micPulse 1.2s infinite}
+  body.isTouch #micFloat{left:auto;right:12px;bottom:auto;top:110px;font-size:14px;padding:8px 12px}
   #chatBox{position:fixed;left:12px;bottom:150px;width:min(360px,46vw);z-index:8;display:flex;flex-direction:column;gap:6px;pointer-events:none}
   #chatLog div{background:rgba(10,12,24,.62);border-radius:8px;padding:4px 9px;margin-top:3px;font-size:14px;line-height:1.3;word-wrap:break-word;transition:opacity .6s}
   #chatLog div b{margin-right:6px}
@@ -116,12 +121,14 @@
 </head>
 <body>
 <canvas id="gl"></canvas>
+<div id="vig"></div>
 <canvas id="hud"></canvas>
 <div id="touch" class="hidden"></div>
+<button id="micFloat" class="hidden">🎤 HABLAR</button>
 <div id="chatBox" class="hidden">
   <div id="chatLog"></div>
   <div id="chatBar"><input id="chatIn" maxlength="120" placeholder="Escribe y pulsa Enter…" autocomplete="off"><button id="chatSend">➤</button><button id="micBtn" title="Chat de voz">🎤</button></div>
-  <div id="chatHint">Enter = escribir · 🎤 = hablar</div>
+  <div id="chatHint">Enter = escribir · Y = micrófono</div>
 </div>
 <div id="rotate"><div style="font-size:70px">📱↻</div>Este juego se ve mejor con el celular acostado<button class="go" id="rotLock">🔄 PONER HORIZONTAL</button><button id="rotSkip">Jugar así</button><div style="font-size:14px;opacity:.7;font-weight:500">Si no gira, revisa que la rotación automática de tu celular esté activada.</div></div>
 <div id="loading">💥 ABRAHAM KABLOK! · Cargando…</div>
@@ -727,9 +734,14 @@ scene.fog = new THREE.Fog(0xcfe8ff, 60, 230);
 const HEMI=new THREE.HemisphereLight(0xffffff, 0x8a93a8, 0.2); scene.add(HEMI);
 const sun = new THREE.DirectionalLight(0xfff4e0, 0.85);
 sun.position.set(14, 30, 10); sun.castShadow = true;
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(2048,2048); sun.shadow.bias=-0.0004; sun.shadow.normalBias=.02;
 Object.assign(sun.shadow.camera, {left:-46,right:46,top:30,bottom:-30,near:1,far:90});
 scene.add(sun);
+// brillo del sol en el cielo
+(function(){ const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); const gr=g.createRadialGradient(128,128,0,128,128,128);
+  gr.addColorStop(0,'rgba(255,255,245,1)'); gr.addColorStop(.08,'rgba(255,250,220,1)'); gr.addColorStop(.2,'rgba(255,236,180,.45)'); gr.addColorStop(1,'rgba(255,220,150,0)'); g.fillStyle=gr; g.fillRect(0,0,256,256);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  sp.scale.set(60,60,1); sp.position.copy(sun.position).normalize().multiplyScalar(170); sp.renderOrder=-1; scene.add(sp); window.SUNGLOW=sp; })();
 window.worldEnv=function(big){ Object.assign(sun.shadow.camera, big?{left:-68,right:68,top:42,bottom:-42,far:130}:{left:-46,right:46,top:30,bottom:-30,far:90}); sun.shadow.camera.updateProjectionMatrix();
   if(window.FLOOR){ FLOOR.scale.set(big?1.45:1,big?1.25:1,1); const m=window.FLOOR_DEFMAP||(window.FLOOR_DEFMAP=FLOOR.material.map); m.repeat.set(big?33:23,big?20:16); }
   if(window.SCENERY){ for(const c of SCENERY.children) c.visible=!big||!(Math.abs(c.position.x)<70&&Math.abs(c.position.z)<44); } };
@@ -738,11 +750,11 @@ window.worldEnv=function(big){ Object.assign(sun.shadow.camera, big?{left:-68,ri
 const teamZones=[], arenaShell=new THREE.Group(); scene.add(arenaShell);
 (function(){
   const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d');
-  g.fillStyle='#f6f8fb'; g.fillRect(0,0,256,256);
-  g.fillStyle='#eff2f7'; g.fillRect(0,0,128,128); g.fillRect(128,128,128,128);
-  for(let i=0;i<6000;i++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},${Math.random()*.03})`; g.fillRect(Math.random()*256,Math.random()*256,1.5,1.5); }
+  g.fillStyle='#e9edf2'; g.fillRect(0,0,256,256);
+  g.fillStyle='#e1e6ed'; g.fillRect(0,0,128,128); g.fillRect(128,128,128,128);
+  for(let i=0;i<16000;i++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},${Math.random()*.05})`; g.fillRect(Math.random()*256,Math.random()*256,1.5,1.5); }
   for(let i=0;i<6;i++){ g.strokeStyle='rgba(60,60,70,.08)'; g.lineWidth=1; g.beginPath(); let x=Math.random()*256,y=Math.random()*256; g.moveTo(x,y); for(let k=0;k<5;k++){ x+=Math.random()*30-15; y+=Math.random()*30-15; g.lineTo(x,y);} g.stroke(); }
-  g.strokeStyle='rgba(120,132,155,.75)'; g.lineWidth=5; g.strokeRect(0,0,256,256); g.strokeRect(0,0,128,128); g.strokeRect(128,128,128,128);
+  g.strokeStyle='rgba(110,122,145,.6)'; g.lineWidth=4; g.strokeRect(0,0,256,256); g.strokeRect(0,0,128,128); g.strokeRect(128,128,128,128);
   const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(23, 16);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(92, 64), new THREE.MeshStandardMaterial({map:tex, roughness:.92, envMapIntensity:.5}));
   floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor); window.FLOOR=floor;
@@ -2259,7 +2271,7 @@ function views(){
   return [{x:0,y:0,w,h,f:player,cam:cam1,vm:vm1}];
 }
 function render(){
-  hx.clearRect(0,0,innerWidth,innerHeight); if(typeof coverGroup!=='undefined') coverGroup.visible=false;
+  hx.clearRect(0,0,innerWidth,innerHeight); try{ renderPracticePreview(frameDt||.016); }catch(e){} if(typeof coverGroup!=='undefined') coverGroup.visible=false;
   if(state==='editor'){ renderEditor(); return; }
   if(!player){ // fondo del menú: portada con los personajes (o cámara girando)
     const onCover=state==='menu'&&coverFigs.length; coverGroup.visible=!!onCover;
@@ -2533,9 +2545,19 @@ function makeSign(tex, w, h, x, y, z, rotY){
 }
 // pantallón gigante que se atraviesa caminando (con animación)
 const SCREENS=[];
+function screenGlare(){ const c=document.createElement('canvas'); c.width=256; c.height=150; const g=c.getContext('2d');
+  const gr=g.createLinearGradient(0,0,256,150); gr.addColorStop(0,'rgba(255,255,255,.16)'); gr.addColorStop(.35,'rgba(255,255,255,.04)'); gr.addColorStop(.36,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,256,150); return new THREE.CanvasTexture(c); }
 function drawScreen(g,kind,t){
   const W=512,H=300;
-  if(kind==='practice'){
+  if(kind==='practice'){ g.clearRect(0,0,W,H);
+    if(Math.sin(t*4)>-.4){ g.fillStyle='#e8202f'; g.beginPath(); g.arc(24,24,9,0,7); g.fill(); }
+    g.fillStyle='rgba(0,0,0,.55)'; g.fillRect(38,12,92,26); g.fillStyle='#fff'; g.font='800 18px Rubik, Arial'; g.textAlign='left'; g.fillText('EN VIVO',46,31);
+    const lg=g.createLinearGradient(0,232,0,300); lg.addColorStop(0,'rgba(10,14,30,0)'); lg.addColorStop(.35,'rgba(10,14,30,.85)'); g.fillStyle=lg; g.fillRect(0,232,W,68);
+    g.fillStyle='#ffd84f'; g.font='900 24px Rubik, Arial'; g.fillText('🎯 CAMPO DE TIRO',14,276);
+    g.textAlign='right'; g.font='800 15px Rubik, Arial'; g.fillStyle=Math.sin(t*5)>-.3?'#fff':'rgba(255,255,255,.4)'; g.fillText('CRUZA LA PANTALLA ▶',W-12,276);
+    g.fillStyle='rgba(0,0,0,.06)'; for(let y=0;y<H;y+=4) g.fillRect(0,y,W,1);
+    return; }
+  if(kind==='practice-old'){
     const sky=g.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#2f8cff'); sky.addColorStop(.6,'#bfe4ff'); g.fillStyle=sky; g.fillRect(0,0,W,H);
     g.fillStyle='#4a933a'; g.fillRect(0,190,W,110); g.fillStyle='#3d7f30'; for(let i=0;i<6;i++) g.fillRect(0,196+i*20,W,8);
     const tg=[[110,150,34],[256,128,24],[400,156,40],[190,96,14],[330,92,12]], cyc=t*.9, k=Math.floor(cyc)%tg.length, f=cyc%1;
@@ -2558,11 +2580,38 @@ function drawScreen(g,kind,t){
   if(Math.sin(t*5)>-.3){ g.fillStyle='rgba(10,14,30,.8)'; g.fillRect(96,250,320,40); g.fillStyle='#fff'; g.font='800 24px Rubik, Arial'; g.textAlign='center'; g.fillText('▶ CRUZA LA PANTALLA ◀',W/2,278); }
   g.fillStyle='rgba(0,0,0,.10)'; for(let y=(t*30)%6;y<H;y+=6) g.fillRect(0,y,W,2);
 }
+// ---- vista en vivo del campo de tiro para el pantallón del lobby ----
+const PV={rt:null,cam:null,group:null,t:0,acc:0};
+function buildPracticePreview(){ if(PV.group) return;
+  if(!practiceGroup.children.length) buildPracticeRoom();
+  const g=new THREE.Group(); g.visible=false; scene.add(g); const oW=W, oH=H; W=PW; H=PH;
+  try{ for(const p of PRACTICE_MAP) g.add(buildPartMesh({...p}));
+    DUMMY_SPOTS.forEach((sp,i)=>{ const m=buildFighterMesh(new THREE.Color(['#ff4f6b','#ff8a3a','#c04fff','#3ddc84','#ffb020'][i%5]),randomLook()); m.position.set(toX(sp.x),sp.z||0,toZ(sp.y)); m.rotation.y=-Math.PI; g.add(m); });
+    for(const sp of POPPER_SPOTS){ const q=new THREE.Group(); q.position.set(toX(sp.x),0,toZ(sp.y)); q.scale.setScalar(sp.s||1);
+      const post=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.95,8),GM.metal); post.position.y=.47; q.add(post);
+      const pl=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.05,24),popMat); pl.rotation.z=Math.PI/2; pl.position.y=1.31; q.add(pl); g.add(q); } }
+  finally{ W=oW; H=oH; }
+  PV.group=g; PV.rt=new THREE.WebGLRenderTarget(640,372); PV.cam=new THREE.PerspectiveCamera(52,640/372,.1,260); }
+function renderPracticePreview(dt){
+  if(state!=='lobby'||!PV.rt||!lobbyGroup.visible) return; PV.t+=dt; PV.acc+=dt; if(PV.acc<(qLevel?.2:.09)) return; PV.acc=0;
+  const keep=[lobbyGroup.visible,practiceGroup.visible,partsGroup.visible,arenaShell.visible], fv=fighters.map(f=>f.mesh.visible), zv=teamZones.map(z=>z.visible);
+  lobbyGroup.visible=false; partsGroup.visible=false; arenaShell.visible=false; teamZones.forEach(z=>z.visible=false); practiceGroup.visible=true; PV.group.visible=true; fighters.forEach(f=>f.mesh.visible=false);
+  window.worldEnv(true);
+  const a=Math.sin(PV.t*.16)*.42, cz=pZ(950)+Math.sin(PV.t*.09)*9;   // cámara que recorre la línea de tiro
+  PV.cam.position.set(pX(175),2.4+Math.sin(PV.t*.27)*.35,cz); PV.cam.lookAt(PV.cam.position.x+Math.cos(a)*30,1.2,cz+Math.sin(a)*30);
+  renderer.setScissorTest(false); renderer.setRenderTarget(PV.rt); renderer.render(scene,PV.cam); renderer.setRenderTarget(null);
+  window.worldEnv(false);
+  [lobbyGroup.visible,practiceGroup.visible,partsGroup.visible,arenaShell.visible]=keep; PV.group.visible=false; fighters.forEach((f,i)=>f.mesh.visible=fv[i]); teamZones.forEach((z,i)=>z.visible=zv[i]); }
 function makeScreen(kind,owner){
   const g=new THREE.Group(), SW=10, SH=5.8, col=kind==='practice'?0xffd84f:0x2fa8ff;
   const c=document.createElement('canvas'); c.width=512; c.height=300; const ctx=c.getContext('2d'); drawScreen(ctx,kind,0);
   const tex=new THREE.CanvasTexture(c);
-  const scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true,opacity:.96})); scr.position.y=SH/2+.12; g.add(scr);
+  let scr;
+  if(kind==='practice'){ buildPracticePreview();
+    scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:PV.rt.texture,side:THREE.DoubleSide})); scr.position.y=SH/2+.12; g.add(scr);
+    const ov=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:false})); ov.position.set(0,SH/2+.12,.02); g.add(ov);
+    const gl=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:screenGlare(),transparent:true,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending})); gl.position.set(0,SH/2+.12,.04); g.add(gl); }
+  else { scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true,opacity:.96})); scr.position.y=SH/2+.12; g.add(scr); }
   const fm=new THREE.MeshStandardMaterial({color:0x1b1e2c,metalness:.6,roughness:.35}), led=new THREE.MeshBasicMaterial({color:col});
   for(const sx of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.35,SH+.7,.45),fm); post.position.set(sx*(SW/2+.17),(SH+.7)/2,0); post.castShadow=true; g.add(post);
     const l=new THREE.Mesh(new THREE.BoxGeometry(.08,SH,.5),led); l.position.set(sx*(SW/2+.02),SH/2+.12,0); g.add(l); }
@@ -3181,17 +3230,19 @@ async function voiceToggle(){ if(!NET.on){ toasts.push({txt:'El chat de voz es p
   if(VOICE.stream){ voiceOff(); chatSys('Apagaste tu micrófono'); netSend({t:'chat',n:'📢',txt:netMe().name+' apagó el micrófono',c:'#9fe6ff'}); return; }
   try{ VOICE.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
   catch(e){ chatSys('No se pudo usar el micrófono. Revisa que le diste permiso al navegador.'); return; }
-  $('micBtn').classList.add('on'); voiceSync(); chatSys('Tu micrófono está encendido: tus amigos te escuchan'); netSend({t:'chat',n:'📢',txt:netMe().name+' encendió el micrófono 🎤',c:'#9fe6ff'}); }
+  micUI(); voiceSync(); chatSys('Tu micrófono está encendido: tus amigos te escuchan'); netSend({t:'chat',n:'📢',txt:netMe().name+' encendió el micrófono 🎤',c:'#9fe6ff'}); }
+function micUI(){ const on=!!VOICE.stream; $('micBtn').classList.toggle('on',on); $('micFloat').classList.toggle('on',on); $('micFloat').textContent=on?'🎤 MICRÓFONO ENCENDIDO':'🎤 HABLAR'; }
 function voiceOff(quiet){ if(VOICE.stream){ VOICE.stream.getTracks().forEach(t=>t.stop()); VOICE.stream=null; }
-  for(const id in VOICE.calls){ try{ VOICE.calls[id].close(); }catch(e){} } VOICE.calls={}; try{ $('micBtn').classList.remove('on'); }catch(e){}
+  for(const id in VOICE.calls){ try{ VOICE.calls[id].close(); }catch(e){} } VOICE.calls={}; try{ micUI(); }catch(e){}
   if(quiet){ for(const id in VOICE.audio) voiceStop(id); } }
 function chatTick(){ const box=$('chatBox'), inRoom=NET.on&&!NET.inGame&&!$('netScr').classList.contains('hidden')&&!$('netRoom').classList.contains('hidden');
   box.classList.toggle('hidden',!NET.on||!(NET.inGame||inRoom)); box.classList.toggle('room',inRoom);
-  const want=inRoom?$('netRoom'):document.body; if(box.parentNode!==want) want.appendChild(box); }
+  const want=inRoom?$('netRoom'):document.body; if(box.parentNode!==want) want.appendChild(box);
+  $('micFloat').classList.toggle('hidden',!(NET.inGame&&(state==='play'||state==='countdown'||state==='roundEnd'))); }
 function initNet(){ initInstall();
   $('chatIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); chatSend(); } else if(e.key==='Escape'){ e.preventDefault(); $('chatIn').value=''; chatClose(); } });
   $('chatIn').addEventListener('keyup',e=>e.stopPropagation());
-  $('chatSend').onclick=chatSend; $('micBtn').onclick=voiceToggle; setInterval(chatTick,200); $('netBtn').onclick=()=>{ initAudio(); openNet(); }; $('netCreate').onclick=netCreate; $('netJoin').onclick=netJoin; $('netGo').onclick=netGo; $('netBack').onclick=netLeave;
+  $('chatSend').onclick=chatSend; $('micBtn').onclick=voiceToggle; $('micFloat').onclick=e=>{ e.stopPropagation(); voiceToggle(); }; setInterval(chatTick,200); $('netBtn').onclick=()=>{ initAudio(); openNet(); }; $('netCreate').onclick=netCreate; $('netJoin').onclick=netJoin; $('netGo').onclick=netGo; $('netBack').onclick=netLeave;
   $('netCode').addEventListener('keydown',e=>{ if(e.key==='Enter') netJoin(); }); }
 // ================== RULETA SORPRESA ==================
 // a veces (no siempre) te regalan una ruleta al terminar una partida
@@ -3287,6 +3338,7 @@ function goMenu(){ releaseLock(); setWorld(1200,750); applyTheme('default'); inL
 
 addEventListener('keydown',e=>{
   if(chatIsOpen()) return;
+  if((e.key==='y'||e.key==='Y')&&NET.inGame){ voiceToggle(); return; }
   if(e.key==='Enter'&&NET.on&&(NET.inGame||!$('netRoom').classList.contains('hidden'))){ e.preventDefault(); chatOpen(); return; }
   const k=e.key.toLowerCase(); keys[k]=true; codes[e.code]=true;
   if(e.key===' '||e.key.startsWith('Arrow')||e.key==='Backspace'||e.key==='Enter'||e.key==='Tab') e.preventDefault();

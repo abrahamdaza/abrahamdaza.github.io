@@ -567,7 +567,18 @@ document.getElementById('loading').remove();
 
 // ================== Constantes ==================
 let W = 1200, H = 750; const U = 25;         // mundo en "px"; 25 px = 1 unidad 3D (la zona de práctica es más grande)
-function setWorld(w,h){ W=w; H=h; if(typeof arenaShell!=='undefined') arenaShell.visible=(w===1200); if(window.worldEnv) window.worldEnv(w>2000); }
+// mapas de batalla más grandes: todo el mapa se agranda 1.8 veces (los personajes quedan del mismo tamaño)
+const ARENA_S=1.8, AW=Math.round(1200*ARENA_S), AH=Math.round(750*ARENA_S);
+function setWorld(w,h){ W=w; H=h; const big=(w===AW);
+  if(typeof arenaShell!=='undefined'){ arenaShell.visible=(w===1200||big); arenaShell.scale.set(big?ARENA_S:1,1,big?ARENA_S:1); }
+  if(typeof teamZones!=='undefined'&&teamZones.length){ const k=big?ARENA_S:1; teamZones.forEach((z,i)=>{ z.scale.set(k,k,1); z.position.x=toX(i?W-80*k:80*k); }); }
+  if(window.worldEnv) window.worldEnv(w===PW); }
+function bigParts(parts){ if(!parts||parts.__big) return parts; const k=ARENA_S;
+  const out=parts.map(p=>{ const keep=(p.t==='crate'||p.t==='barrel'||p.t==='heal'||((p.t==='tower'||p.t==='block')&&p.w===p.h&&p.w<=60));
+    if(keep){ const cx=(p.x+p.w/2)*k, cy=(p.y+p.h/2)*k; return {...p,x:Math.round(cx-p.w/2),y:Math.round(cy-p.h/2)}; }
+    return {...p,x:Math.round(p.x*k),y:Math.round(p.y*k),w:Math.round(p.w*k),h:Math.round(p.h*k)}; });
+  out.__big=true; return out; }
+function SP(i){ const s=SPAWNS[i], k=(W===AW)?ARENA_S:1; return {x:s.x*k,y:s.y*k}; }
 const toX = px => px/U - W/(2*U), toZ = py => py/U - H/(2*U);
 const EYE = 1.9, BULLET_H = 1.5;
 
@@ -823,7 +834,7 @@ ARENAS.unshift({name:'Plaza Central', parts:PLAZA_MAP});
 const OPEN_MAP=pointMirror([
   {t:'tower',x:300,y:350,w:50,h:50},                                         // rey / reina
   {t:'block',x:200,y:150,w:50,h:50},{t:'block',x:400,y:500,w:50,h:50},{t:'block',x:450,y:150,w:50,h:50},   // torre, alfil, caballo
-  {t:'crate',x:350,y:100,w:50,h:50},{t:'crate',x:250,y:550,w:50,h:50},{t:'crate',x:500,y:300,w:50,h:50},{t:'crate',x:550,y:600,w:50,h:50},   // peones
+  {t:'crate',x:350,y:100,w:50,h:50},{t:'crate',x:250,y:550,w:50,h:50},{t:'crate',x:500,y:300,w:50,h:50},{t:'crate',x:470,y:640,w:50,h:50},   // peones
   {t:'block',x:575,y:125,w:50,h:125},                                        // paredes
 ]);
 ARENAS.unshift({name:'Campo de Ajedrez', theme:'chess', emoji:'♟️', parts:OPEN_MAP});
@@ -1935,12 +1946,12 @@ function startRound(){
   const rl=()=>randomLook();
   const blueSp=duel?[4]:trio?[0,1,4]:[0,1], redSp=duel?[5]:trio?[2,3,5]:[2,3];
   const blueCol=['#2fa8ff','#7f8cff','#3fd0e0'], redCol=['#ff4f6b','#ff8a3a','#ff5fc0'];
-  player=makeFighter(SPAWNS[blueSp[0]],blueCol[0],false,0,friend?'JUGADOR 1':'TÚ',myLook(),{...profile.loadout});
+  player=makeFighter(SP(blueSp[0]),blueCol[0],false,0,friend?'JUGADOR 1':'TÚ',myLook(),{...profile.loadout});
   fighters=[player]; p2=null;
   for(let i=1;i<n;i++){ const isFriend=friend&&i===1;
-    const a=makeFighter(SPAWNS[blueSp[i]],blueCol[i],!isFriend,0,isFriend?'AMIGO':(n>2?'ALIADO '+i:'ALIADO'),randomLook(),isFriend?{...profile.loadout}:botKit());
+    const a=makeFighter(SP(blueSp[i]),blueCol[i],!isFriend,0,isFriend?'AMIGO':(n>2?'ALIADO '+i:'ALIADO'),randomLook(),isFriend?{...profile.loadout}:botKit());
     if(isFriend) p2=a; fighters.push(a); }
-  for(let i=0;i<n;i++) fighters.push(makeFighter(SPAWNS[redSp[i]],redCol[i],true,1,duel?'RIVAL':'ROJO '+(i+1),rl(),botKit()));
+  for(let i=0;i<n;i++) fighters.push(makeFighter(SP(redSp[i]),redCol[i],true,1,duel?'RIVAL':'ROJO '+(i+1),rl(),botKit()));
   weaponSlot(player,s1); if(p2) weaponSlot(p2,s2);
   for(const f of fighters){ if(f===player) f.level=profile.level; else if(f===p2) f.level=profile.friendLevel||1;
     else { if(matchLevels[f.label]==null) matchLevels[f.label]=Math.max(1,profile.level+Math.floor(Math.random()*7)-3); f.level=matchLevels[f.label]; } }
@@ -1952,7 +1963,7 @@ function startRound(){
   countdown=3; state='countdown'; roundTime=0; suddenShown=false;
 }
 let matchLevels={};
-function startMatch(){ profile.stats.matches=(profile.stats.matches||0)+1; saveProfile(); matchLevels={}; setWorld(1200,750); applyTheme(fromEditor?'default':arenaTheme); score={p:0,b:0}; player=null; p2=null; feed=[]; matchDone=[]; matchKeys=0; startRound(); }
+function startMatch(){ profile.stats.matches=(profile.stats.matches||0)+1; saveProfile(); matchLevels={}; setWorld(AW,AH); currentMap=bigParts(currentMap); applyTheme(fromEditor?'default':arenaTheme); score={p:0,b:0}; player=null; p2=null; feed=[]; matchDone=[]; matchKeys=0; startRound(); }
 
 // ================== Geometría 2D ==================
 function circleRect(cx,cy,r,w){ const nx=Math.max(w.x,Math.min(cx,w.x+w.w)), ny=Math.max(w.y,Math.min(cy,w.y+w.h)); const dx=cx-nx, dy=cy-ny; return dx*dx+dy*dy<r*r; }
@@ -3565,13 +3576,13 @@ function netGo(){ if(!NET.host) return; if(NET.players.length<2){ netStatus('Nec
   const map=NET.map>=0?NET.map:Math.floor(Math.random()*ARENAS.length); netSend({t:'start',players:NET.players,map}); netStartMatch(NET.players,map); }
 function netStartMatch(players,mapIdx){ NET.players=players; NET.inGame=true; NET.lastMap=mapIdx; RM.done=true; clearInterval(RM.timer); $('rematchBox').classList.add('hidden'); $('netScr').classList.add('hidden'); $('menu').classList.add('hidden'); $('over').classList.add('hidden');
   chooseArena(ARENAS[mapIdx]); inLobby=false; lobbyGroup.visible=false; setArenaVisible(true); fromEditor=false; mode='online';
-  matchLevels={}; setWorld(1200,750); applyTheme(arenaTheme); score={p:0,b:0}; feed=[]; matchDone=[]; matchKeys=0; netStartRound(); requestLock(); }
+  matchLevels={}; setWorld(AW,AH); currentMap=bigParts(currentMap); applyTheme(arenaTheme); score={p:0,b:0}; feed=[]; matchDone=[]; matchKeys=0; netStartRound(); requestLock(); }
 function netStartRound(){
   roundKills=0; const keep=player?Math.max(0,SLOTS.findIndex(sl=>player.kit[sl]===player.weapon)):0;
   for(const f of fighters) scene.remove(f.mesh); fighters=[]; p2=null; player=null;
   const sp=[[0,1,4],[2,3,5]], cols=[['#2fa8ff','#7f8cff','#3fd0e0'],['#ff4f6b','#ff8a3a','#ff5fc0']], cnt=[0,0];
   for(const p of NET.players){ const t=p.team, i=cnt[t]++, me=p.id===NET.myId;
-    const f=makeFighter(SPAWNS[sp[t][i%3]],cols[t][i%3],!me,t,me?'TÚ':p.name,p.look||LOOKS[0],me?{...profile.loadout}:{primary:null,secondary:null,melee:12,utility:null});
+    const f=makeFighter(SP(sp[t][i%3]),cols[t][i%3],!me,t,me?'TÚ':p.name,p.look||LOOKS[0],me?{...profile.loadout}:{primary:null,secondary:null,melee:12,utility:null});
     f.netId=p.id; f.level=p.level||1; f.angle=t===1?Math.PI:0; if(!me){ f.remote=true; f.tg={x:f.x,y:f.y,z:0}; } else player=f; fighters.push(f); }
   if(!player){ netLeave(); return; }
   weaponSlot(player,keep); loadMap(currentMap);

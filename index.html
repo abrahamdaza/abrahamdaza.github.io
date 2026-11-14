@@ -2583,6 +2583,8 @@ function buildGun(group, wi){
       const spine=new THREE.Mesh(new THREE.ExtrudeGeometry(sp,{depth:.022,bevelEnabled:false}),new THREE.MeshStandardMaterial({color:0x4a4e57,metalness:.8,roughness:.45})); spine.geometry.translate(0,0,-.011); spine.rotation.copy(blade.rotation); spine.position.copy(blade.position); group.add(spine);
       const tang=new THREE.Mesh(roundedBox(.06,.05,.05,.01),GM.dark); tang.position.set(1.0,-.03,0); group.add(tang);
       for(const o of [blade,edge,spine]) o.scale.x=-1;   // la hoja apunta a la derecha
+      // pivote para voltear la guadaña sobre su mango (izquierda / derecha)
+      const piv=new THREE.Group(); piv.position.y=-.03; while(group.children.length){ const c=group.children[0]; c.position.y+=.03; piv.add(c); } group.add(piv); group.userData.twirl=piv;
     }
     else if(w.kind==='flash'){ const c=add(new THREE.CylinderGeometry(.08,.08,.24,10),0xdddddd,.08,0,0); c.rotation.z=Math.PI/2; }
     else if(w.kind==='saw'){ add(new THREE.BoxGeometry(.3,.22,.18),0xffb020,0,0,0); add(new THREE.BoxGeometry(.6,.12,.03),0x9aa0a8,.42,0,0); }
@@ -3187,6 +3189,8 @@ function buildFirearm(g, w){
 // piezas móviles: corredera, bomba de escopeta, cerrojo y cañones que giran
 let frameDt=1/60; const sway={x:0,y:0}; let camMode='fp';
 function animateGun(gr,f){
+  if(gr.userData.twirl){ const t=performance.now()/1000+(f.x||0)*.01, calm=1-Math.min(1,(f.swing||0)*2.5), v=Math.sin(t*2.6);   // voltea la hoja: izquierda, derecha, izquierda, derecha
+    gr.userData.twirl.rotation.x=Math.sign(v)*Math.pow(Math.abs(v),.55)*Math.PI/2*calm; }
   const u=gr.userData, k=f.kick||0;
   if(u.slide) u.slide.position.x=u.slideX-k*.05;
   if(u.pump){ const c=f.cyc>0?Math.sin((1-f.cyc/.55)*Math.PI):0; u.pump.position.x=u.pumpX-c*.12; }

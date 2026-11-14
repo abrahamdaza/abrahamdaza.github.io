@@ -1449,7 +1449,7 @@ const I18N_RX = [
   [/^Aún no estás en el top 20 · tu nivel: (\d+)$/, m=>`Not in the top 20 yet · your level: ${m[1]}`],
   [/^(\d+) ganadas$/, m=>`${m[1]} wins`],
   [/^Pulsa E: ver (.+)$/, m=>`Press E: see ${T(m[1])}`],
-  [/^Tienes (\d+) 🔑 · vuelve por el túnel$/, m=>`You have ${m[1]} 🔑 · go back through the tunnel`],
+  [/^Tienes (\d+) 🔑 · vuelve por el callejón$/, m=>`You have ${m[1]} 🔑 · go back through the alley`],
   [/^Te faltan (\d+) 🔑$/, m=>`You need ${m[1]} more 🔑`],
   [/^🎉 ¡Compraste (.+)!$/, m=>`🎉 You bought ${T(m[1])}!`],
   [/^Ronda (\d+) · (.+)$/, m=>`Round ${m[1]} · ${T(m[2])}`],
@@ -4535,8 +4535,9 @@ function buildLobby(){
   { const pt=makeScreen('practice',lobbyGroup); pt.position.set(toX(1162),0,toZ(260)); pt.rotation.y=-Math.PI/2; lobbyGroup.add(pt); }
   // túnel hacia la sala de armas (donde estaba la tienda)
   buildTunnel(lobbyGroup,0,232,523,toX,toZ,232/U);
-  makeSign(signTex([{t:'🛒 TIENDA',size:90},{t:'entra por el túnel',size:40}],'#ff8a3d'), 4.5, 2.0, toX(240), 3.9, toZ(523), Math.PI/2);
-  for(const s2 of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.3,3.2,.3),new THREE.MeshStandardMaterial({color:0x1b1e2c,metalness:.6,roughness:.4})); post.position.set(toX(236),1.6,toZ(523)+s2*2.7); lobbyGroup.add(post); }
+  { const door=new THREE.Mesh(new THREE.PlaneGeometry(4.3,3.3),new THREE.MeshBasicMaterial({map:signTex([{t:'🛒',size:120},{t:'SALA DE ARMAS',size:52}],'#1a1208','#ffd27a'),side:THREE.DoubleSide}));
+    door.position.set(toX(4),1.65,toZ(523)); door.rotation.y=Math.PI/2; lobbyGroup.add(door); }   // puerta al fondo del callejón
+  makeSign(signTex([{t:'🛒 TIENDA',size:90},{t:'entra por el callejón',size:40}],'#ff8a3d'), 4.2, 1.8, toX(236), 4.75, toZ(523), Math.PI/2);
   // pantalla de anuncios (lado izquierdo)
   { const ab=makeAdBoard(); ab.position.set(toX(48),0,toZ(250)); ab.rotation.y=Math.PI/2; lobbyGroup.add(ab); }
   // tablero de los 20 mejores (lado derecho)
@@ -5292,17 +5293,32 @@ const ARMORY_MAP=[];
 const ARM_TUNNEL_WALLS=[ {t:'block',x:0,y:AT_Y-70,w:270,h:20}, {t:'block',x:0,y:AT_Y+50,w:270,h:20} ];   // paredes invisibles del túnel
 function armPedSpots(){ const out=[], rows=[150,300,600,750], n=armoryWeapons().length, cols=Math.ceil(n/rows.length);
   for(let r=0;r<rows.length;r++) for(let c=0;c<cols;c++) out.push({x:420+c*(1100/Math.max(1,cols-1)),y:rows[r]}); return out; }
-// túnel con arcos de luz (sirve para el lobby y para la sala)
-function buildTunnel(group, x0, x1, zc, tx, tz, len, R=2.6){ const L=len, cx=(tx(x0)+tx(x1))/2;
-  const shell=new THREE.Mesh(new THREE.CylinderGeometry(R,R,L,28,1,true,0,Math.PI),new THREE.MeshStandardMaterial({color:0x2a3040,map:GTEX.brushed,metalness:.6,roughness:.45,side:THREE.DoubleSide}));
-  shell.rotation.z=Math.PI/2; shell.position.set(cx,0,tz(zc)); group.add(shell);
-  const fl=new THREE.Mesh(new THREE.PlaneGeometry(L,R*2-.2),new THREE.MeshStandardMaterial({color:0x14171f,metalness:.4,roughness:.3})); fl.rotation.x=-Math.PI/2; fl.position.set(cx,.02,tz(zc)); fl.receiveShadow=true; group.add(fl);
-  const n=Math.max(3,Math.round(L/1.6)), cols=[0x2fa8ff,0xffb020];
-  for(let i=0;i<=n;i++){ const x=tx(x0)+i*(L/n), m=new THREE.MeshBasicMaterial({color:cols[i%2]});
-    const arc=new THREE.Mesh(new THREE.TorusGeometry(R-.05,.07,8,32,Math.PI),m); arc.rotation.y=Math.PI/2; arc.position.set(x,0,tz(zc)); group.add(arc);
-    const rib=new THREE.Mesh(new THREE.TorusGeometry(R+.02,.12,8,32,Math.PI),new THREE.MeshStandardMaterial({color:0x1a1d26,metalness:.7,roughness:.4})); rib.rotation.y=Math.PI/2; rib.position.set(x+.08,0,tz(zc)); group.add(rib); }
-  for(const s of [-1,1]){ const strip=new THREE.Mesh(new THREE.BoxGeometry(L,.05,.08),new THREE.MeshBasicMaterial({color:0x2fa8ff})); strip.position.set(cx,.06,tz(zc)+s*(R-.25)); group.add(strip); }
-  const lt=new THREE.PointLight(0x9fd0ff,.8,L+4); lt.position.set(cx,1.8,tz(zc)); group.add(lt); }
+// entrada tipo callejón: dos paredes de ladrillo, piso de asfalto, faroles y un marco con letrero (sirve para el lobby y para la sala)
+const BRICK_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); g.fillStyle='#6f6a66'; g.fillRect(0,0,256,256);
+  for(let r=0;r<16;r++) for(let k=0;k<5;k++){ const x=k*56+(r%2?28:0)-28, y=r*16; const v=Math.random()*30-15; g.fillStyle=`rgb(${150+v},${78+v*.6},${58+v*.5})`; g.fillRect(x+2,y+2,52,12); }
+  for(let i=0;i<500;i++){ g.fillStyle=`rgba(0,0,0,${Math.random()*.12})`; g.fillRect(Math.random()*256,Math.random()*256,2,2); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t; })();
+function buildTunnel(group, x0, x1, zc, tx, tz, len, R){ const L=len, HW=2.15, H=3.3, cx=(tx(x0)+tx(x1))/2, z0=tz(zc);
+  const bt=BRICK_TEX.clone(); bt.needsUpdate=true; bt.repeat.set(L/2.2,H/2.2); const brick=new THREE.MeshStandardMaterial({color:0xffffff,map:bt,roughness:.85});
+  const trim=new THREE.MeshStandardMaterial({color:0x3a3d44,map:GTEX.stipple,roughness:.7});
+  for(const sd of [-1,1]){ const w=new THREE.Mesh(new THREE.BoxGeometry(L,H,.35),brick); w.position.set(cx,H/2,z0+sd*(HW+.17)); w.castShadow=true; w.receiveShadow=true; group.add(w);
+    const cap=new THREE.Mesh(new THREE.BoxGeometry(L+.1,.14,.5),trim); cap.position.set(cx,H+.07,z0+sd*(HW+.17)); group.add(cap);
+    const base=new THREE.Mesh(new THREE.BoxGeometry(L,.25,.4),trim); base.position.set(cx,.125,z0+sd*(HW+.15)); group.add(base);
+    // faroles en la pared
+    for(let i=0;i<Math.max(2,Math.round(L/4));i++){ const x=tx(x0)+(i+.5)*L/Math.max(2,Math.round(L/4));
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.35),trim); arm.position.set(x,2.55,z0+sd*(HW-.12)); group.add(arm);
+      const lamp=new THREE.Mesh(new THREE.BoxGeometry(.22,.3,.22),new THREE.MeshStandardMaterial({color:0xffe2a0,emissive:0xffc860,emissiveIntensity:1.6})); lamp.position.set(x,2.4,z0+sd*(HW-.3)); group.add(lamp); } }
+  // piso de asfalto con línea pintada
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(L,HW*2),new THREE.MeshStandardMaterial({color:0x2e3036,map:GTEX.stipple,roughness:.95})); fl.rotation.x=-Math.PI/2; fl.position.set(cx,.02,z0); fl.receiveShadow=true; group.add(fl);
+  const ln=new THREE.Mesh(new THREE.PlaneGeometry(L,.12),new THREE.MeshBasicMaterial({color:0xe8c44a})); ln.rotation.x=-Math.PI/2; ln.position.set(cx,.03,z0); group.add(ln);
+  // detalles: tuberías, una caja y un bote de basura
+  const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,L,8),new THREE.MeshStandardMaterial({color:0x6c7480,metalness:.7,roughness:.4})); pipe.rotation.z=Math.PI/2; pipe.position.set(cx,2.9,z0-HW+.05); group.add(pipe);
+  const bin=new THREE.Mesh(new THREE.CylinderGeometry(.28,.24,.75,14),new THREE.MeshStandardMaterial({color:0x3f5a3f,metalness:.4,roughness:.6})); bin.position.set(tx(x0)+L*.3,.38,z0+HW-.35); bin.castShadow=true; group.add(bin);
+  const box=new THREE.Mesh(roundedBox(.6,.45,.5,.03),new THREE.MeshStandardMaterial({color:0xa8865a,roughness:.9})); box.position.set(tx(x0)+L*.65,.23,z0-HW+.35); box.castShadow=true; group.add(box);
+  // marco de la entrada (en las dos puntas)
+  for(const ex of [tx(x0),tx(x1)]){ const lin=new THREE.Mesh(new THREE.BoxGeometry(.4,.35,HW*2+.9),trim); lin.position.set(ex,H+.25,z0); lin.castShadow=true; group.add(lin);
+    for(const sd of [-1,1]){ const col=new THREE.Mesh(new THREE.BoxGeometry(.4,H+.4,.4),trim); col.position.set(ex,(H+.4)/2,z0+sd*(HW+.25)); group.add(col); } }
+  const lt=new THREE.PointLight(0xffd9a0,.7,L+3); lt.position.set(cx,2.6,z0); group.add(lt); }
 function nameTag(txt,col){ const c=document.createElement('canvas'); c.width=512; c.height=96; const g=c.getContext('2d');
   g.fillStyle='rgba(10,14,30,.78)'; g.beginPath(); g.roundRect?g.roundRect(6,10,500,76,22):g.rect(6,10,500,76); g.fill(); g.strokeStyle=col; g.lineWidth=5; g.stroke();
   g.fillStyle='#fff'; g.textAlign='center'; let fs=46; g.font='900 '+fs+'px Rubik, Arial'; while(g.measureText(T(txt)).width>470&&fs>18){ fs--; g.font='900 '+fs+'px Rubik, Arial'; } g.fillText(T(txt),256,64);
@@ -5328,7 +5344,7 @@ function buildArmoryRoom(){ armoryGroup.clear(); ARM_PEDS=[];
   const amb=new THREE.HemisphereLight(0xdfe8ff,0x40465a,.55); armoryGroup.add(amb);
   // túnel de entrada (y salida)
   buildTunnel(armoryGroup,0,RX0,AT_Y,aX,aZ,RX0/U);
-  const ex=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.8),new THREE.MeshBasicMaterial({map:signTex([{t:'⬅ VOLVER AL LOBBY',size:70}],'#1f6fd0'),side:THREE.DoubleSide})); ex.position.set(aX(RX0)+.3,3.1,aZ(AT_Y)); ex.rotation.y=Math.PI/2; armoryGroup.add(ex);
+  const ex=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.8),new THREE.MeshBasicMaterial({map:signTex([{t:'⬅ VOLVER AL LOBBY',size:70}],'#1f6fd0'),side:THREE.DoubleSide})); ex.position.set(aX(RX0)+.3,4.45,aZ(AT_Y)); ex.scale.setScalar(.85); ex.rotation.y=Math.PI/2; armoryGroup.add(ex);
   // pedestales con armas flotando
   // armas ordenadas por poder: cada grupo en su propia fila (de la más barata a la más cara)
   const POW={'Lanzacohetes':70};   // barato pero muy poderoso
@@ -5377,7 +5393,7 @@ function armoryUpdate(dt){
 }
 function drawArmoryHUD(){ const cx=innerWidth/2;
   hx.fillStyle='rgba(15,18,30,.7)'; hx.fillRect(cx-230,8,460,58); hx.textAlign='center'; hx.font='900 22px Rubik'; hx.fillStyle='#ffb020'; hx.fillText(T('🛒 SALA DE ARMAS'),cx,34);
-  hx.font='700 14px Rubik'; hx.fillStyle='#fff'; hx.fillText(T('Tienes '+profile.keys+' 🔑 · vuelve por el túnel'),cx,56);
+  hx.font='700 14px Rubik'; hx.fillStyle='#fff'; hx.fillText(T('Tienes '+profile.keys+' 🔑 · vuelve por el callejón'),cx,56);
   if(armoryHint){ hx.font='800 20px Rubik'; const w=hx.measureText(T(armoryHint)).width+40; hx.fillStyle='rgba(255,216,79,.92)'; hx.fillRect(cx-w/2,innerHeight-190,w,40); hx.fillStyle='#1a1200'; hx.fillText(T(armoryHint),cx,innerHeight-163); } }
 function armoryInteract(){ if(armNear) openWeaponInfo(armNear.w); }
 // ---- tarjeta del arma: qué hace → (clic izquierdo) precio → COMPRAR ----

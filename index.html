@@ -90,7 +90,8 @@
   #joyBase{position:absolute;width:130px;height:130px;border-radius:50%;background:rgba(15,18,34,.3);border:3px solid rgba(255,255,255,.4);pointer-events:none}
   #joyKnob{position:absolute;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.75);pointer-events:none}
   #rotate{position:fixed;inset:0;z-index:20;background:#0d0f1a;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:22px;font-weight:800;text-align:center;padding:30px}
-  @media (orientation:portrait){ body.isTouch #rotate{display:flex} }
+  @media (orientation:portrait){ body.isTouch:not(.noRotate) #rotate{display:flex} }
+  #rotate button{font-size:20px;padding:14px 26px}
   body.isTouch #keysBox, body.isTouch #helpBtn{display:none !important}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;z-index:10;background:#0d0f1a}
 </style>
@@ -99,7 +100,7 @@
 <canvas id="gl"></canvas>
 <canvas id="hud"></canvas>
 <div id="touch" class="hidden"></div>
-<div id="rotate"><div style="font-size:70px">📱↻</div>Gira tu celular o tablet<br>para jugar acostado</div>
+<div id="rotate"><div style="font-size:70px">📱↻</div>Este juego se ve mejor con el celular acostado<button class="go" id="rotLock">🔄 PONER HORIZONTAL</button><button id="rotSkip">Jugar así</button><div style="font-size:14px;opacity:.7;font-weight:500">Si no gira, revisa que la rotación automática de tu celular esté activada.</div></div>
 <div id="loading">💥 ABRAHAM KABLOK! · Cargando…</div>
 
 <div id="menu" class="screen cover">
@@ -2963,16 +2964,19 @@ document.getElementById('pauseMenu').onclick=()=>{ document.getElementById('paus
 // ---- interfaz táctil ----
 function initTouch(){
   if(!TOUCH) return;
-  document.body.classList.add('isTouch'); locked=true; hadLock=true; qLevel=1; applyQuality();
+  document.body.classList.add('isTouch');
+  $('rotSkip').onclick=()=>document.body.classList.add('noRotate');
+  $('rotLock').onclick=async()=>{ try{ const el=document.documentElement; if(!document.fullscreenElement&&el.requestFullscreen) await el.requestFullscreen(); }catch(e){}
+    try{ await screen.orientation.lock('landscape'); }catch(e){ document.body.classList.add('noRotate'); } }; locked=true; hadLock=true; qLevel=1; applyQuality();
   const root=$('touch'); root.innerHTML='<div id="joyBase"></div><div id="joyKnob"></div>';
   const btns={}, B=(id,label,cls='')=>{ const d=document.createElement('div'); d.className='tb '+cls; d.textContent=label; root.appendChild(d); btns[id]=d; return d; };
   B('fire','🔥','fire'); B('fire2','🔥','fire'); B('jump','⬆️'); B('aim','🎯'); B('reload','🔄'); B('slide','⬇️'); B('dash','💨');
   B('use','E','small'); B('weap','🔫 ARMAS','small'); B('util','💣','small'); B('cam','👁 V','small'); B('pause','⏸️','small');
-  function layout(){ const w=innerWidth, h=innerHeight, s=Math.min(1.15,Math.max(.75,h/430)), P=(id,x,y,r)=>{ const d=btns[id]; d.style.left=(x-r)+'px'; d.style.top=(y-r)+'px'; d.style.width=d.style.height=(2*r)+'px'; d.dataset.cx=x; d.dataset.cy=y; d.dataset.r=r; };
+  function layout(){ const w=innerWidth, port=innerHeight>innerWidth, h=innerHeight-(port?115:0), s=Math.min(1.15,Math.max(.62,Math.min(innerHeight/430,w/760))), P=(id,x,y,r)=>{ const d=btns[id]; d.style.left=(x-r)+'px'; d.style.top=(y-r)+'px'; d.style.width=d.style.height=(2*r)+'px'; d.dataset.cx=x; d.dataset.cy=y; d.dataset.r=r; };
     P('fire',w-75*s,h-115*s,44*s); P('aim',w-172*s,h-152*s,30*s); P('jump',w-165*s,h-52*s,30*s); P('reload',w-52*s,h-218*s,24*s);
     P('dash',w-122*s,h-238*s,22*s); P('util',w-200*s,h-238*s,20*s); P('use',w-262*s,h-160*s,20*s);
     P('slide',58*s,h-242*s,25*s); P('fire2',150*s,h-262*s,30*s);
-    P('weap',w-90*s,36*s,24*s); P('cam',w-190*s,36*s,20*s); P('pause',36*s,36*s,20*s);
+    const top=port?150:36*s; P('weap',w-90*s,top,24*s); P('cam',w-190*s,top,20*s); P('pause',36*s,top,20*s);
     for(const id of ['use','weap','cam','pause','util']){ const d=btns[id]; d.style.width=(2*d.dataset.r*1.6)+'px'; d.style.left=(d.dataset.cx-d.dataset.r*1.6)+'px'; } }
   layout(); addEventListener('resize',layout);
   const key=(k,code,down)=>dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key:k,code}));
@@ -2982,7 +2986,7 @@ function initTouch(){
   const hit=(x,y)=>{ for(const id in btns){ const d=btns[id], cx=+d.dataset.cx, cy=+d.dataset.cy, r=+d.dataset.r*(d.classList.contains('small')?1.6:1)+8; if(Math.abs(x-cx)<r&&Math.abs(y-cy)<+d.dataset.r+8) return id; } return null; };
   const slotHit=(x,y)=>{ if(y<innerHeight-100||y>innerHeight-40) return -1; const i=Math.floor((x-(innerWidth/2-210))/106.5); return i>=0&&i<4?i:-1; };
   const kb=$('joyBase'), kn=$('joyKnob'); const showJoy=(bx,by,kx,ky)=>{ kb.style.left=(bx-65)+'px'; kb.style.top=(by-65)+'px'; kn.style.left=(kx-29)+'px'; kn.style.top=(ky-29)+'px'; };
-  const restJoy=()=>{ const s=Math.min(1.15,Math.max(.75,innerHeight/430)); showJoy(110*s,innerHeight-120*s,110*s,innerHeight-120*s); }; restJoy(); addEventListener('resize',restJoy);
+  const restJoy=()=>{ const port=innerHeight>innerWidth, s=Math.min(1.15,Math.max(.62,Math.min(innerHeight/430,innerWidth/760))), y=innerHeight-(port?115:0)-120*s, x=Math.max(70,110*s); showJoy(x,y,x,y); }; restJoy(); addEventListener('resize',restJoy);
   root.addEventListener('touchstart',e=>{ e.preventDefault(); initAudio();
     for(const t of e.changedTouches){ const x=t.clientX, y=t.clientY, id=hit(x,y);
       if(id){ owner[t.identifier]={btn:id}; btns[id].classList.add('on');

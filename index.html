@@ -1317,7 +1317,7 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar":"🎁 Welcome! Here are 10 🔑 to get started","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","¡A JUGAR!":"LET'S PLAY!","🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar":"🎁 Welcome! Here are 10 🔑 to get started","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
 "Vale":"Costs","Gratis":"Free","✅ Ya es tuya · EQUIPAR":"✅ It's yours · EQUIP","¡Equipada!":"Equipped!","No te alcanzan las llaves":"Not enough keys","Ranura":"Slot","Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility",
 "Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda":"Uses per round","⬅ VOLVER AL LOBBY":"⬅ BACK TO LOBBY","✅ TUYA":"✅ YOURS",
 "Máximo 2 amigos (3 personas hablando)":"Max 2 friends (3 people talking)","➕ Amigo":"➕ Friend","✅ Amigo":"✅ Friend","💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.":"💬🎤 Chat and voice are only with your friends (max 2). Tap ➕ Friend.",
@@ -4527,10 +4527,6 @@ function buildLobby(){
     const lines=[{t:p.label,size:p.label.length>8?54:80}]; if(p.sub) lines.push({t:p.sub,size:34});
     makeSign(signTex(lines,p.color), 5, 2.5, toX(p.x+p.w/2), 4.2, toZ(p.y-12), 0);
     for(const sx of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.15,3,.15),new THREE.MeshStandardMaterial({color:0xeeeeee})); post.position.set(toX(p.x+p.w/2)+sx*2.4,1.5,toZ(p.y-12)); lobbyGroup.add(post); }
-    // rivales esperando en el cuadro
-    for(let i=0;i<p.foes;i++){ const npc=buildFighterMesh(new THREE.Color(['#ff4f6b','#ff8a3a','#ff5fc0'][i]), LOOKS[(i+2)%5]);
-      npc.position.set(toX(p.x+p.w/2)+(i-(p.foes-1)/2)*1.4, 0, toZ(p.y+35)); npc.rotation.y=-Math.PI/2; lobbyGroup.add(npc);
-      npc.userData.fake={mesh:npc,vx:0,vy:0,onGround:true,bob:0,pitch:0,weapon:12,reloadT:0,kick:0,swing:0,phaseT:Math.random()*5}; lobbyNPCs.push(npc.userData.fake); }
   }
   // portal a la práctica (lado derecho)
   { const pt=makeScreen('practice',lobbyGroup); pt.position.set(toX(1162),0,toZ(260)); pt.rotation.y=-Math.PI/2; lobbyGroup.add(pt); }
@@ -4547,7 +4543,7 @@ function buildLobby(){
     // vigas y paneles de luz del techo
     for(let i=0;i<=6;i++){ const b=new THREE.Mesh(new THREE.BoxGeometry(.35,.5,Dp+.8),trim); b.position.set(-Wd/2+i*Wd/6,H-.2,0); L.add(b); }
     for(let i=0;i<6;i++) for(let j=0;j<3;j++){ const lp=new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.2),new THREE.MeshBasicMaterial({color:0xfff6e6,side:THREE.DoubleSide})); lp.rotation.x=Math.PI/2; lp.position.set(-Wd/2+(i+.5)*Wd/6,H-.02,-Dp/2+(j+.5)*Dp/3); L.add(lp); }
-    for(let i=0;i<4;i++) for(const zz of [-Dp/4,Dp/4]){ const pl=new THREE.PointLight(0xfff2de,.55,24,1.4); pl.position.set(-Wd/2+(i+.5)*Wd/4,H-1,zz); L.add(pl); } }
+ }
   // entrada normal a la sala de armas: una puerta abierta en la pared con un pasillo
   buildHall(lobbyGroup,-160,0,523,toX,toZ,160/U);
   makeSign(signTex([{t:'🛒 TIENDA',size:90},{t:'sala de armas',size:40}],'#ff8a3d'), 4.0, 1.7, toX(0)+.7, 5.0, toZ(523), Math.PI/2);
@@ -4719,7 +4715,8 @@ function closeLobbyUI(id){ $(id).classList.add('hidden'); refreshKeys(); uiOpen=
 function startFromPad(p){
   if(TOUCH&&p.mode==='friend'){ toasts.push({txt:'El 2 vs 2 con amigo (pantalla dividida) es solo para computador',life:2.5}); curPad=null; padT=-99; return; }
   if(p.mode==='practice'){ startPractice(); return; }
-  openMapSelect(p);
+  // entra directo a jugar contra los robots (mapa al azar)
+  mapPad=p; state='mapselect'; pickMap(-1);
 }
 // ---------- elegir mapa ----------
 let mapPad=null, mapTimer=0, mapTimerId=null;
@@ -4808,7 +4805,7 @@ function updateLobby(dt){
   const pad=PADS.find(q=>p.x>q.x&&p.x<q.x+q.w&&p.y>q.y&&p.y<q.y+q.h&&p.z<.5);
   if(pad!==curPad){ curPad=pad; padT=0; if(pad) beep(600,.08,'sine',.06); }
   if(pad){ const prev=Math.ceil(3-padT); padT+=dt; const now=Math.ceil(3-padT); if(now!==prev&&now>0) beep(500,.08,'sine',.06);
-    if(padT>=3){ startFromPad(pad); return; } }
+    if(padT>=.5){ startFromPad(pad); return; } }
   const t=performance.now()/1000;
   for(const q of PADS){ q.ring.material.opacity=q===pad?.55+Math.sin(t*10)*.25:.3+Math.sin(t*3)*.1; }
   for(const n of lobbyNPCs){ if(n.emote){ n.emote.t-=dt; if(n.emote.t<=0) n.emote=null; } else if(Math.random()<dt*.12) startEmote(n,['wave','dance','cheer','point'][Math.floor(Math.random()*4)]); animateFighter(n); }
@@ -4843,10 +4840,8 @@ function drawLobbyHUD(){
   SLOTS.forEach((sl,i)=>{ const w=WEAPONS[profile.loadout[sl]]||{css:'#888',name:'(vacío)'}; hx.font='500 13px Rubik'; hx.fillStyle=w.css; hx.fillText(`${i+1} · ${w.name}`,18,50+i*18); });
   if(lobbyHint){ hx.textAlign='center'; hx.font='800 20px Rubik'; const tw=hx.measureText(lobbyHint).width+40;
     hx.fillStyle='rgba(15,18,30,.75)'; hx.fillRect(cx-tw/2,innerHeight*.62,tw,40); hx.fillStyle='#ffd84f'; hx.fillText(lobbyHint,cx,innerHeight*.62+27); }
-  if(curPad){ hx.textAlign='center'; const n=Math.max(1,Math.ceil(3-padT));
-    hx.font='800 30px Rubik'; hx.fillStyle=curPad.color; hx.fillText(`${curPad.label}`,cx,innerHeight*.3);
-    hx.font='800 80px Rubik'; hx.fillStyle='#fff'; hx.fillText(n,cx,innerHeight*.3+80);
-    hx.font='500 16px Rubik'; hx.fillText('Sal del cuadro para cancelar',cx,innerHeight*.3+110); }
+  if(curPad){ hx.textAlign='center'; hx.font='800 30px Rubik'; hx.fillStyle=curPad.color; hx.fillText(`${curPad.label}`,cx,innerHeight*.3);
+    hx.font='900 44px Rubik'; hx.fillStyle='#fff'; hx.fillText(T('¡A JUGAR!'),cx,innerHeight*.3+60); }
   toasts.slice(0,2).forEach((k,i)=>{ hx.globalAlpha=Math.min(1,k.life*2); hx.textAlign='center'; hx.font='800 17px Rubik'; const tw=hx.measureText(k.txt).width+40;
     hx.fillStyle='rgba(20,22,40,.9)'; hx.fillRect(cx-tw/2,80+i*42,tw,34); hx.fillStyle='#ffd84f'; hx.fillText(k.txt,cx,103+i*42); });
   hx.globalAlpha=1;

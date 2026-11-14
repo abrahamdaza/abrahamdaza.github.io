@@ -2874,7 +2874,6 @@ function playFromEditor(){ closeEditor(); inLobby=false; setArenaVisible(true); 
 // salón donde caminas antes de jugar: tienda, misiones y cuadros para entrar a una partida
 const LOBBY_MAP=[
   {t:'block',x:30,y:390,w:40,h:240},  {t:'platform',x:110,y:440,w:40,h:150},     // tienda (pared + mostrador)
-  {t:'block',x:1130,y:390,w:40,h:240},                                            // tablero de misiones
   {t:'platform',x:300,y:340,w:100,h:30},{t:'platform',x:800,y:340,w:100,h:30},     // bancas
   {t:'crate',x:1000,y:630,w:50,h:50},{t:'crate',x:1050,y:650,w:50,h:50},{t:'barrel',x:330,y:600,w:40,h:40},
 ];
@@ -2886,7 +2885,6 @@ const PADS=[
 ];
 const KIOSKS=[
   {id:'shop',     x:190, y:515, label:'TIENDA'},
-  {id:'missions', x:1060,y:510, label:'MISIONES'},
 ];
 const DIFF_NAMES=['FÁCIL','NORMAL','DIFÍCIL'];
 const lobbyGroup=new THREE.Group(); lobbyGroup.visible=false; scene.add(lobbyGroup);
@@ -2911,8 +2909,8 @@ function drawScreen(g,kind,t){
     if(Math.sin(t*4)>-.4){ g.fillStyle='#e8202f'; g.beginPath(); g.arc(24,24,9,0,7); g.fill(); }
     g.fillStyle='rgba(0,0,0,.55)'; g.fillRect(38,12,92,26); g.fillStyle='#fff'; g.font='800 18px Rubik, Arial'; g.textAlign='left'; g.fillText('EN VIVO',46,31);
     const lg=g.createLinearGradient(0,232,0,300); lg.addColorStop(0,'rgba(10,14,30,0)'); lg.addColorStop(.35,'rgba(10,14,30,.85)'); g.fillStyle=lg; g.fillRect(0,232,W,68);
-    g.fillStyle='#ffd84f'; g.font='900 24px Rubik, Arial'; g.fillText('🎯 CAMPO DE TIRO',14,276);
-    g.textAlign='right'; g.font='800 15px Rubik, Arial'; g.fillStyle=Math.sin(t*5)>-.3?'#fff':'rgba(255,255,255,.4)'; g.fillText('CRUZA LA PANTALLA ▶',W-12,276);
+    g.fillStyle='#ffd84f'; { let fs=24; g.font='900 '+fs+'px Rubik, Arial'; while(g.measureText('🎯 CAMPO DE TIRO').width>220&&fs>12){ fs--; g.font='900 '+fs+'px Rubik, Arial'; } } g.fillText('🎯 CAMPO DE TIRO',14,276);
+    g.textAlign='right'; { let fs=15; g.font='800 '+fs+'px Rubik, Arial'; while(g.measureText('CRUZA LA PANTALLA ▶').width>W-250&&fs>9){ fs--; g.font='800 '+fs+'px Rubik, Arial'; } } g.fillStyle=Math.sin(t*5)>-.3?'#fff':'rgba(255,255,255,.4)'; g.fillText('CRUZA LA PANTALLA ▶',W-12,276);
     g.fillStyle='rgba(0,0,0,.06)'; for(let y=0;y<H;y+=4) g.fillRect(0,y,W,1);
     return; }
   if(kind==='practice-old'){
@@ -3026,7 +3024,6 @@ function buildLobby(){
     for(let i=0;i<5;i++) add(new THREE.SphereGeometry(.09,10,8),new THREE.MeshBasicMaterial({color:0xfff2b0}),toX(140),2.75,toZ(450+i*32));   // foquitos del toldo
     const lamp=new THREE.PointLight(0xffd9a0,.7,9); lamp.position.set(toX(125),2.6,toZ(515)); L.add(lamp); }
   // misiones
-  makeSign(signTex([{t:'📜 MISIONES',size:80},{t:'gana llaves',size:40}],'#3f6fff'), 4.5, 2.25, toX(1128), 2.2, toZ(510), -Math.PI/2);
   // kioscos
 }
 function refreshDiffSign(){ if(diffSign){ diffSign.material.map=signTex([{t:'DIFICULTAD',size:56},{t:DIFF_NAMES[difficulty],size:70}],'#444c66'); diffSign.material.needsUpdate=true; } }

@@ -2875,7 +2875,6 @@ function playFromEditor(){ closeEditor(); inLobby=false; setArenaVisible(true); 
 const LOBBY_MAP=[
   {t:'block',x:30,y:390,w:40,h:240},  {t:'platform',x:110,y:440,w:40,h:150},     // tienda (pared + mostrador)
   {t:'block',x:1130,y:390,w:40,h:240},                                            // tablero de misiones
-  {t:'block',x:810,y:705,w:100,h:30}, // kioscos: dificultad, caja de arena, avatar
   {t:'platform',x:300,y:340,w:100,h:30},{t:'platform',x:800,y:340,w:100,h:30},     // bancas
   {t:'crate',x:1000,y:630,w:50,h:50},{t:'crate',x:1050,y:650,w:50,h:50},{t:'barrel',x:330,y:600,w:40,h:40},
 ];
@@ -2888,7 +2887,6 @@ const PADS=[
 const KIOSKS=[
   {id:'shop',     x:190, y:515, label:'TIENDA'},
   {id:'missions', x:1060,y:510, label:'MISIONES'},
-  {id:'avatar',   x:860, y:650, label:'AVATAR'},
 ];
 const DIFF_NAMES=['FÁCIL','NORMAL','DIFÍCIL'];
 const lobbyGroup=new THREE.Group(); lobbyGroup.visible=false; scene.add(lobbyGroup);
@@ -3030,8 +3028,6 @@ function buildLobby(){
   // misiones
   makeSign(signTex([{t:'📜 MISIONES',size:80},{t:'gana llaves',size:40}],'#3f6fff'), 4.5, 2.25, toX(1128), 2.2, toZ(510), -Math.PI/2);
   // kioscos
-  makeSign(signTex([{t:'👕 AVATAR',size:72},{t:'personaliza',size:40}],'#2fa8ff'), 3.6, 1.8, toX(860), 1.6, toZ(703), Math.PI);
-  placeStatue();
 }
 function refreshDiffSign(){ if(diffSign){ diffSign.material.map=signTex([{t:'DIFICULTAD',size:56},{t:DIFF_NAMES[difficulty],size:70}],'#444c66'); diffSign.material.needsUpdate=true; } }
 let inLobby=false, padT=0, curPad=null, uiOpen=false, lobbyHint='';
@@ -3062,7 +3058,7 @@ function lobbyInteract(){
   else if(k.id==='avatar'){ uiOpen=true; releaseLock(); openAvatar(); }
 }
 function closeLobbyUI(id){ $(id).classList.add('hidden'); refreshKeys(); uiOpen=false;
-  if(inLobby){ placeStatue(); scene.remove(player.mesh); player.mesh=buildFighterMesh(new THREE.Color(player.color), myLook()); scene.add(player.mesh); player.gunShown=-1; applyLoadout(player); }
+  if(inLobby){ scene.remove(player.mesh); player.mesh=buildFighterMesh(new THREE.Color(player.color), myLook()); scene.add(player.mesh); player.gunShown=-1; applyLoadout(player); }
   else $('menu').classList.remove('hidden'); }
 function startFromPad(p){
   if(TOUCH&&p.mode==='friend'){ toasts.push({txt:'El 2 vs 2 con amigo (pantalla dividida) es solo para computador',life:2.5}); curPad=null; padT=-99; return; }
@@ -3166,7 +3162,7 @@ function drawMissionPanel(y){ const ms=activeMissions(); if(!ms.length) return; 
   hx.textAlign='left'; hx.font='800 13px Rubik'; hx.fillStyle='#ffd84f'; hx.fillText('📜 MISIONES',x+12,y+20);
   ms.forEach((m,i)=>{ const yy=y+30+i*rh, have=Math.min(m.goal,profile.stats[m.stat]||0), col=['#7fd4ff','#3ddc84','#ffb020'][m.reward-1];
     hx.fillStyle=col; hx.font='900 '+(sm?12:13)+'px Rubik'; hx.fillText('+'+m.reward+' 🔑',x+10,yy+15);
-    hx.fillStyle='#fff'; hx.font='600 '+(sm?11:12)+'px Rubik'; let t=T(m.txt); const maxW=w-70; while(hx.measureText(t).width>maxW&&t.length>4) t=t.slice(0,-2); if(t!==m.txt) t=t.trimEnd()+'…'; hx.fillText(t,x+58,yy+15);
+    hx.fillStyle='#fff'; hx.font='600 '+(sm?11:12)+'px Rubik'; let t=T(m.txt); const full=t; const maxW=w-70; while(hx.measureText(t).width>maxW&&t.length>4) t=t.slice(0,-2); if(t!==full) t=t.trimEnd()+'…'; hx.fillText(t,x+58,yy+15);
     hx.fillStyle='rgba(255,255,255,.15)'; hx.fillRect(x+10,yy+22,w-20,6); hx.fillStyle=col; hx.fillRect(x+10,yy+22,(w-20)*have/m.goal,6);
     hx.textAlign='right'; hx.font='700 10px Rubik'; hx.fillStyle='rgba(255,255,255,.75)'; hx.fillText(have+'/'+m.goal,x+w-10,yy+38); hx.textAlign='left'; }); }
 function drawLobbyHUD(){

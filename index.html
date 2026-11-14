@@ -1317,7 +1317,7 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
 "Vale":"Costs","Gratis":"Free","✅ Ya es tuya · EQUIPAR":"✅ It's yours · EQUIP","¡Equipada!":"Equipped!","No te alcanzan las llaves":"Not enough keys","Ranura":"Slot","Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility",
 "Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda":"Uses per round","⬅ VOLVER AL LOBBY":"⬅ BACK TO LOBBY","✅ TUYA":"✅ YOURS",
 "Máximo 2 amigos (3 personas hablando)":"Max 2 friends (3 people talking)","➕ Amigo":"➕ Friend","✅ Amigo":"✅ Friend","💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.":"💬🎤 Chat and voice are only with your friends (max 2). Tap ➕ Friend.",
@@ -5329,10 +5329,17 @@ function buildArmoryRoom(){ armoryGroup.clear(); ARM_PEDS=[];
   buildTunnel(armoryGroup,0,RX0,AT_Y,aX,aZ,RX0/U);
   const ex=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.8),new THREE.MeshBasicMaterial({map:signTex([{t:'⬅ VOLVER AL LOBBY',size:70}],'#1f6fd0'),side:THREE.DoubleSide})); ex.position.set(aX(RX0)+.3,3.1,aZ(AT_Y)); ex.rotation.y=Math.PI/2; armoryGroup.add(ex);
   // pedestales con armas flotando
-  const ws=armoryWeapons(), spots=armPedSpots();
+  // armas ordenadas por poder: cada grupo en su propia fila (de la más barata a la más cara)
+  const POW={'Lanzacohetes':70};   // barato pero muy poderoso
+  const TIERS=[{n:'🟢 BÁSICAS',c:0x3ddc84,y:150,ok:v=>v<=30},{n:'🔵 NORMALES',c:0x2fa8ff,y:300,ok:v=>v>30&&v<=45},{n:'🟣 PODEROSAS',c:0xc04fff,y:600,ok:v=>v>45&&v<=65},{n:'🟡 LAS MEJORES',c:0xffc83a,y:750,ok:v=>v>65}];
+  const ws=[], spots=[], tierCol=[];
+  for(const tr of TIERS){ const list=armoryWeapons().filter(w=>tr.ok(POW[w.name]??w.cost)).sort((a,b)=>(POW[a.name]??a.cost)-(POW[b.name]??b.cost)||a.dmg-b.dmg);
+    list.forEach((w,i)=>{ ws.push(w); tierCol.push(tr.c); spots.push({x:470+i*(1060/Math.max(1,list.length-1||1))*(list.length>1?1:0),y:tr.y}); });
+    const lab=nameTag(tr.n,'#'+tr.c.toString(16).padStart(6,'0')); lab.scale.set(3.6,.68,1); lab.position.set(aX(350),3.2,aZ(tr.y)); armoryGroup.add(lab);
+    const mark=new THREE.Mesh(new THREE.PlaneGeometry(1060/U+3,.12),new THREE.MeshBasicMaterial({color:tr.c})); mark.rotation.x=-Math.PI/2; mark.position.set(aX(470+530),.03,aZ(tr.y+70)); armoryGroup.add(mark); }
   const baseM=new THREE.MeshStandardMaterial({color:0x22262f,map:GTEX.brushed,metalness:.8,roughness:.3}), glass=new THREE.MeshStandardMaterial({color:0x9fd0ff,metalness:.2,roughness:.05,transparent:true,opacity:.35});
   ws.forEach((w,i)=>{ const sp=spots[i]; if(!sp) return; const g=new THREE.Group(); g.position.set(aX(sp.x),0,aZ(sp.y)); armoryGroup.add(g);
-    const col=w.slot==='primary'?0x2fa8ff:w.slot==='secondary'?0x3ddc84:w.slot==='melee'?0xff8a3d:0xc04fff;
+    const col=tierCol[i];
     const b1=new THREE.Mesh(new THREE.CylinderGeometry(.7,.8,.2,32),baseM); b1.position.y=.1; b1.castShadow=true; g.add(b1);
     const b2=new THREE.Mesh(new THREE.CylinderGeometry(.5,.62,.8,32),baseM); b2.position.y=.6; b2.castShadow=true; g.add(b2);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(.58,.035,8,40),new THREE.MeshBasicMaterial({color:col})); ring.rotation.x=Math.PI/2; ring.position.y=1.02; g.add(ring);

@@ -170,7 +170,7 @@
     </div>
     <div id="keysBox" class="hidden">
     <div class="keys">
-    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> moverse · <kbd>Ratón</kbd> mirar y disparar · <kbd>Espacio</kbd> saltar · <kbd>C</kbd> deslizarse · <kbd>Shift</kbd> impulso · <kbd>R</kbd> recargar<br>
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> moverse · <kbd>Ratón</kbd> mirar y disparar · <kbd>Espacio</kbd> saltar · <kbd>C</kbd> / <kbd>Ctrl</kbd> deslizarse · <kbd>W</kbd>+<kbd>Shift</kbd>+<kbd>Ctrl</kbd> deslizarse corriendo · <kbd>Shift</kbd> impulso · <kbd>R</kbd> recargar<br>
     <kbd>M</kbd> mis armas · <kbd>F</kbd> inspeccionar arma · <kbd>V</kbd> cámara 1ª/3ª persona · <kbd>G</kbd> saludar · <kbd>B</kbd> bailar · <kbd>H</kbd> celebrar · <kbd>J</kbd> señalar<br><kbd>E</kbd> usar (en el lobby) · <kbd>1</kbd> Principal · <kbd>2</kbd> Secundaria · <kbd>3</kbd> Cuerpo a cuerpo · <kbd>4</kbd> Utilidad · <kbd>Q</kbd> lanzar utilidad rápido · <kbd>Esc</kbd> pausa
   </div>
   <div class="keys" id="p2keys" style="color:#8fa8ff">
@@ -1335,7 +1335,7 @@ const I18N_EN = {
 "Nivel":"Level","nivel":"level",
 // ---- controles ----
 "Ratón":"Mouse","Espacio":"Space","Shift":"Shift","Ctrl":"Ctrl","Enter":"Enter","Esc":"Esc","Shift der.":"Right Shift","Ctrl der.":"Right Ctrl","Retroceso":"Backspace",
-"moverse ·":"move ·","mirar y disparar ·":"look and shoot ·","saltar ·":"jump ·","deslizarse ·":"slide ·","impulso ·":"dash ·","recargar":"reload","ranuras ·":"slots ·","mis armas ·":"my weapons ·",
+"moverse ·":"move ·","mirar y disparar ·":"look and shoot ·","saltar ·":"jump ·","deslizarse ·":"slide ·","deslizarse corriendo ·":"running slide ·","impulso ·":"dash ·","recargar":"reload","ranuras ·":"slots ·","mis armas ·":"my weapons ·",
 "usar (en el lobby) ·":"use (in the lobby) ·","inspeccionar arma ·":"inspect weapon ·","lanzar utilidad rápido ·":"quick-throw utility ·","cámara 1ª/3ª persona ·":"1st/3rd person camera ·",
 "saludar ·":"wave ·","bailar ·":"dance ·","celebrar ·":"cheer ·","pausa":"pause","Amigo (pantalla derecha):":"Friend (right screen):","disparar (con ayuda de puntería) ·":"shoot (with aim assist) ·",
 "avanzar/retroceder ·":"forward/back ·","girar ·":"turn ·","moverse de lado":"strafe","rotar cámara":"rotate camera","señalar":"point","Señalar":"Point",
@@ -3798,13 +3798,14 @@ function moveHuman(f,fw,st,dashKey,jumpKey,dt,slideKey){
   let mx=Math.cos(f.angle)*fw - Math.sin(f.angle)*st, my=Math.sin(f.angle)*fw + Math.cos(f.angle)*st;
   const l=Math.hypot(mx,my); if(l){mx/=l;my/=l;}
   const ox=f.x, oy=f.y; f.dashCd-=dt;
-  if(dashKey&&f.dashCd<=0&&l){ f.dash=.15; f.dvx=mx; f.dvy=my; f.dashCd=1.8; beep(200,.15,'sine',.06,3); }
+  if(dashKey&&!slideKey&&f.dashCd<=0&&l){ f.dash=.15; f.dvx=mx; f.dvy=my; f.dashCd=1.8; beep(200,.15,'sine',.06,3); }
   // deslizarse: impulso por el suelo que se va frenando
-  if(slideKey&&f.onGround&&l&&f.slide<=0&&f.slideCd<=0){ f.slide=.65; f.svx=mx; f.svy=my; f.slideCd=1.0; beep(160,.25,'sine',.05,.5); if(!f.isBot) addStat('slides'); }
+  // W + Shift + Ctrl = deslizarse corriendo (más largo y más rápido)
+  if(slideKey&&f.onGround&&l&&f.slide<=0&&f.slideCd<=0){ const pw=!!(dashKey&&fw>0); f.slidePow=pw; f.slideMax=pw?.95:.65; f.slide=f.slideMax; f.svx=mx; f.svy=my; f.slideCd=pw?1.2:1.0; beep(160,.25,'sine',.05,.5); if(!f.isBot) addStat('slides'); }
   const wpn=WEAPONS[f.weapon];
   const spd=((f===player&&mouse.right&&isSniper(f))?150:(isADS(f)?185:260))*(wpn.slow||1)*(wpn.melee?(wpn.speedMul||1.18):1)*(f.slide>0?.35:1)*(f.frozen>0?.4:1);
   moveFighter(f,mx*spd*dt,my*spd*dt);
-  if(f.slide>0){ const k=f.slide/.65; moveFighter(f,f.svx*620*k*dt,f.svy*620*k*dt); if(Math.random()<.5) burst(f.x,f.y,0xdddddd,1,60,f.z+.1); }
+  if(f.slide>0){ const k=f.slide/(f.slideMax||.65), v=f.slidePow?820:620; moveFighter(f,f.svx*v*k*dt,f.svy*v*k*dt); if(Math.random()<(f.slidePow?.9:.5)) burst(f.x,f.y,0xdddddd,f.slidePow?2:1,70,f.z+.1); }
   if(f.dash>0){ moveFighter(f,f.dvx*720*dt,f.dvy*720*dt); burst(f.x,f.y,f.color,1,40,f.z+.8); }
   if(jumpKey){ if(f.slide>0){ f.slide=0; } jump(f); }
   physics(f,dt);
@@ -5055,7 +5056,7 @@ function pauseGame(){ if(inMatch()) return; pausedFrom=state; state='pause'; mou
   document.getElementById('pauseNote').classList.toggle('hidden',!m);
   document.getElementById('pause').classList.remove('hidden'); }
 // aviso si intentan cerrar la página en plena partida
-addEventListener('beforeunload',e=>{ if(window.NO_LEAVE_PROMPT) return; if(inMatch()||(state==='pause'&&inMatch(pausedFrom))){ e.preventDefault(); e.returnValue=''; return ''; } });
+addEventListener('beforeunload',e=>{ if(window.NO_LEAVE_PROMPT) return; if(inMatch()||(state==='pause'&&inMatch(pausedFrom))||state==='lobby'||state==='practice'){ e.preventDefault(); e.returnValue=''; return ''; } });
 document.getElementById('resume').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); state=pausedFrom||'play'; requestLock(); };
 document.getElementById('pauseEditor').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); openEditor(); };
 document.getElementById('pauseMenu').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); if(pausedFrom==='lobby') goMenu(); else goLobby(); };
@@ -5533,6 +5534,7 @@ addEventListener('keydown',e=>{
   if((e.key==='y'||e.key==='Y')&&NET.inGame){ voiceToggle(); return; }
   if(e.key==='Enter'&&NET.on&&(NET.inGame||!$('netRoom').classList.contains('hidden'))){ e.preventDefault(); chatOpen(); return; }
   const k=e.key.toLowerCase(); keys[k]=true; codes[e.code]=true;
+  if(e.ctrlKey&&['play','countdown','roundEnd','lobby','practice'].includes(state)){ e.preventDefault(); try{ if(document.fullscreenElement&&navigator.keyboard&&navigator.keyboard.lock) navigator.keyboard.lock(); }catch(_){} }   // Ctrl es para deslizarse (que no active atajos del navegador)
   if(e.key===' '||e.key.startsWith('Arrow')||e.key==='Backspace'||e.key==='Enter'||e.key==='Tab') e.preventDefault();
   if(state==='editor'){ if(k==='q'){ rotated=!rotated; rampDir=(rampDir+1)%4; } if(k==='z'&&(e.ctrlKey||e.metaKey)) undoEdit(); return; }
   if(k==='escape' && !locked && state==='practice') pauseGame();

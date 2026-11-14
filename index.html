@@ -498,7 +498,6 @@ const MISSIONS = [
   {id:'m31',txt:'Usa 10 utilidades',                       stat:'utils',       goal:10, reward:1},
   {id:'m32',txt:'Elimina 3 enemigos mientras estás en el aire', stat:'k_air',  goal:3,  reward:2},
 ];
-MISSIONS.forEach(m=>m.reward*=10);
 let profile = {v:4, v4:true, level:1, keys:0, unlocked:WEAPONS.filter(w=>!w.cost).map(w=>w.name), loadout:{...FREE}, stats:{}, done:[]};
 try{
   const s=localStorage.getItem('duelo3d_v2');
@@ -2172,7 +2171,7 @@ function endMatch(){
   state='over'; releaseLock();
   const win=NET.inGame?(player.team===0?score.p>score.b:score.b>score.p):score.p>score.b;
   if(fromEditor) addStat('sandbox');
-  giveKeys(win?10:3);
+  giveKeys(win?3:1);
   // los ganadores suben de nivel
   for(const f of fighters) if(NET.inGame?f===player&&win:(f.team===0)===win){ if(f===player){ profile.level=(profile.level||1)+1; f.level=profile.level; } else if(f===p2){ profile.friendLevel=(profile.friendLevel||1)+1; f.level=profile.friendLevel; } else { matchLevels[f.label]=(matchLevels[f.label]||1)+1; f.level=matchLevels[f.label]; } }
   saveProfile();
@@ -2306,7 +2305,7 @@ function render(){
   }
   renderer.setScissorTest(false);
   if(state==='practice') drawPracticeHUD(); else if(state==='lobby'||state==='mapselect'){ const c=innerWidth/2, m=innerHeight/2; hx.strokeStyle='#fff'; hx.lineWidth=2; hx.beginPath(); hx.arc(c,m,3,0,Math.PI*2); hx.stroke(); drawLobbyHUD(); }
-  else if(state!=='practice') drawGlobalHUD();
+  else if(state!=='practice'){ drawGlobalHUD(); if(state!=='over'&&!p2) drawMissionPanel(Math.round(innerHeight*.3)); }
 }
 const _v=new THREE.Vector3();
 function project(x,y,h,v){ _v.set(toX(x),h,toZ(y)).project(v.cam); if(_v.z>1||_v.z<-1) return null; return {x:v.x+(_v.x+1)/2*v.w, y:v.y+(1-_v.y)/2*v.h}; }
@@ -2811,6 +2810,16 @@ function updateLobby(dt){
   for(const n of lobbyNPCs){ if(n.emote){ n.emote.t-=dt; if(n.emote.t<=0) n.emote=null; } else if(Math.random()<dt*.12) startEmote(n,['wave','dance','cheer','point'][Math.floor(Math.random()*4)]); animateFighter(n); }
   const k=nearKiosk(); lobbyHint = k ? (k.id==='diff'?`Pulsa E para cambiar la dificultad (${DIFF_NAMES[difficulty]})`:`Pulsa E: ${k.label}`) : '';
 }
+// las 3 misiones activas: una de 1 llave, una de 2 y una de 3
+function activeMissions(){ const out=[]; for(const r of [1,2,3]){ const m=MISSIONS.find(m=>m.reward===r&&!profile.done.includes(m.id)); if(m) out.push(m); } return out; }
+function drawMissionPanel(y){ const ms=activeMissions(); if(!ms.length) return; const sm=TOUCH||innerWidth<900, w=sm?220:270, x=innerWidth-w-14, rh=sm?40:46;
+  hx.fillStyle='rgba(10,12,24,.62)'; hx.beginPath(); hx.roundRect?hx.roundRect(x,y,w,30+ms.length*rh,12):hx.rect(x,y,w,30+ms.length*rh); hx.fill();
+  hx.textAlign='left'; hx.font='800 13px Rubik'; hx.fillStyle='#ffd84f'; hx.fillText('📜 MISIONES',x+12,y+20);
+  ms.forEach((m,i)=>{ const yy=y+30+i*rh, have=Math.min(m.goal,profile.stats[m.stat]||0), col=['#7fd4ff','#3ddc84','#ffb020'][m.reward-1];
+    hx.fillStyle=col; hx.font='900 '+(sm?12:13)+'px Rubik'; hx.fillText('+'+m.reward+' 🔑',x+10,yy+15);
+    hx.fillStyle='#fff'; hx.font='600 '+(sm?11:12)+'px Rubik'; let t=m.txt; const maxW=w-70; while(hx.measureText(t).width>maxW&&t.length>4) t=t.slice(0,-2); if(t!==m.txt) t=t.trimEnd()+'…'; hx.fillText(t,x+58,yy+15);
+    hx.fillStyle='rgba(255,255,255,.15)'; hx.fillRect(x+10,yy+22,w-20,6); hx.fillStyle=col; hx.fillRect(x+10,yy+22,(w-20)*have/m.goal,6);
+    hx.textAlign='right'; hx.font='700 10px Rubik'; hx.fillStyle='rgba(255,255,255,.75)'; hx.fillText(have+'/'+m.goal,x+w-10,yy+38); hx.textAlign='left'; }); }
 function drawLobbyHUD(){
   const cx=innerWidth/2;
   hx.textAlign='center';
@@ -2820,6 +2829,7 @@ function drawLobbyHUD(){
   hx.textAlign='right'; hx.font='800 22px Rubik'; hx.fillStyle='#ffd84f'; hx.fillText(`${profile.keys} 🔑`,innerWidth-20,36);
   hx.font='800 16px Rubik'; hx.fillStyle=levelColor(profile.level); hx.fillText(`⭐ Nivel ${profile.level}`,innerWidth-20,78);
   hx.font='500 13px Rubik'; hx.fillStyle='#fff'; if(profile.spins>0){ hx.fillStyle='#ff7ab8'; hx.fillText(`🎁 Tienes ${profile.spins} ruleta${profile.spins>1?'s':''} · Esc → menú para girar`,innerWidth-20,96); hx.fillStyle='#fff'; }
+  drawMissionPanel(110);
   // equipo actual
   hx.textAlign='left'; hx.font='800 13px Rubik'; hx.fillStyle='#fff'; hx.fillText('TU EQUIPO',18,30);
   SLOTS.forEach((sl,i)=>{ const w=WEAPONS[profile.loadout[sl]]||{css:'#888',name:'(vacío)'}; hx.font='500 13px Rubik'; hx.fillStyle=w.css; hx.fillText(`${i+1} · ${w.name}`,18,50+i*18); });
@@ -3260,8 +3270,8 @@ function initNet(){ initInstall();
   $('netCode').addEventListener('keydown',e=>{ if(e.key==='Enter') netJoin(); }); }
 // ================== RULETA SORPRESA ==================
 // a veces (no siempre) te regalan una ruleta al terminar una partida
-const SPIN_PRIZES=[[3,'#2fa8ff'],[5,'#3ddc84'],[3,'#c04fff'],[10,'#ffd84f'],[5,'#ff8a3d'],[3,'#2fa8ff'],[5,'#3ddc84'],[10,'#ff7ab8'],[3,'#c04fff'],[5,'#ff8a3d']].map(([k,c])=>({t:k+' 🔑',keys:k,c}));
-const SPIN_W=SPIN_PRIZES.map(p=>p.keys===3?14:p.keys===5?10:5);     // probabilidad de cada premio
+const SPIN_PRIZES=[[1,'#2fa8ff'],[2,'#3ddc84'],[1,'#c04fff'],[3,'#ffd84f'],[2,'#ff8a3d'],[1,'#2fa8ff'],[2,'#3ddc84'],[3,'#ff7ab8'],[1,'#c04fff'],[2,'#ff8a3d']].map(([k,c])=>({t:k+' 🔑',keys:k,c}));
+const SPIN_W=SPIN_PRIZES.map(p=>p.keys===1?14:p.keys===2?10:5);     // probabilidad de cada premio
 let spinAng=0, spinBusy=false, spinFrom='menu';
 function maybeGiftSpin(win){ if(Math.random()<(win?.45:.25)){ profile.spins=(profile.spins||0)+1; saveProfile(); return true; } return false; }
 function drawWheel(){ const cv=$('spinCv'), g=cv.getContext('2d'), R=180, n=SPIN_PRIZES.length, a=Math.PI*2/n; g.clearRect(0,0,380,380); g.save(); g.translate(190,190); g.rotate(spinAng);
@@ -3295,7 +3305,7 @@ function doBox(){ if(boxBusy||!(profile.boxes>0)) return; profile.boxes--; saveP
   setTimeout(()=>{ const pool=WEAPONS.filter(w=>!w.removed&&w.kind!=='fists'&&!w.util&&w.cost<=60&&!profile.unlocked.includes(w.name)); let msg;
     if(pool.length&&Math.random()<.75){ const w=pool[Math.floor(Math.random()*pool.length)]; profile.unlocked.push(w.name); if(profile.loadout[w.slot]==null) profile.loadout[w.slot]=w.id;
       art.innerHTML=`<img src="${weaponPhoto(w)}" style="height:170px;animation:boxPop .5s cubic-bezier(.2,1.6,.4,1)">`; msg=`¡Te salió un arma: ${w.name}!`; $('boxMsg').style.color=w.css||'#ffd84f'; }
-    else { const k=[3,5,10][Math.floor(Math.random()*3)]; profile.keys+=k; art.innerHTML=`<span style="animation:boxPop .5s cubic-bezier(.2,1.6,.4,1)">🔑</span>`; msg=`Esta vez no vino arma: ¡${k} 🔑!`; $('boxMsg').style.color='#ffd84f'; }
+    else { const k=[1,2,3][Math.floor(Math.random()*3)]; profile.keys+=k; art.innerHTML=`<span style="animation:boxPop .5s cubic-bezier(.2,1.6,.4,1)">🔑</span>`; msg=`Esta vez no vino arma: ¡${k} 🔑!`; $('boxMsg').style.color='#ffd84f'; }
     saveProfile(); art.style.animation=''; $('boxMsg').textContent=msg; [784,1046,1318].forEach((f,i)=>setTimeout(()=>beep(f,.14,'sine',.08),i*110)); boxBusy=false; refreshBoxes(); refreshKeys(); },1150); }
 // ---- foto 3D de cada arma (para la tienda y las cajas) ----
 let wphR=null, wphScene=null, wphCam=null; const wphCache={};

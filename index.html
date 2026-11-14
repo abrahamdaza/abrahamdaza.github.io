@@ -3060,11 +3060,11 @@ function releaseLock(){ if(TOUCH) return; try{ if(document.pointerLockElement) d
 document.addEventListener('pointerlockchange',()=>{
   locked=document.pointerLockElement===glCanvas;
   if(locked) hadLock=true;
-  else if(hadLock && !uiOpen && !chatOpenFlag && (state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')) pauseGame();
+  else if(hadLock && !uiOpen && !chatOpenFlag && (state==='lobby'||state==='practice')) pauseGame();   // en plena partida no hay pausa
 });
 let pausedFrom=null;
 function inMatch(st){ st=st||state; return st==='play'||st==='countdown'||st==='roundEnd'; }
-function pauseGame(){ pausedFrom=state; state='pause'; mouse.down=false; mouse.right=false; const m=inMatch(pausedFrom);
+function pauseGame(){ if(inMatch()) return; pausedFrom=state; state='pause'; mouse.down=false; mouse.right=false; const m=inMatch(pausedFrom);
   document.getElementById('pauseEditor').classList.toggle('hidden',!fromEditor||m);
   document.getElementById('pauseMenu').classList.toggle('hidden',m);
   document.getElementById('pauseNote').classList.toggle('hidden',!m);
@@ -3107,7 +3107,7 @@ function initTouch(){
         if(id==='fire'||id==='fire2'){ mouse.down=true; owner[t.identifier].look={x,y}; }
         else if(id==='aim'){ mouse.right=!mouse.right; btns.aim.classList.toggle('on',mouse.right); }
         else if(id==='chat'){ if(NET.on) chatOpen(); else toasts.push({txt:'El chat es para el modo en línea',life:1.5}); }
-        else if(id==='pause'){ if(state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice') pauseGame(); }
+        else if(id==='pause'){ if(state==='lobby'||state==='practice') pauseGame(); }
         else if(hold[id]) key(hold[id][0],hold[id][1],true);
         else if(tap[id]){ key(tap[id][0],tap[id][1],true); key(tap[id][0],tap[id][1],false); }
         continue; }
@@ -3132,7 +3132,7 @@ function initTouch(){
   // se muestra solo cuando estás jugando
   setInterval(()=>{ const on=(state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')&&!uiOpen;
     root.classList.toggle('hidden',!on); if(!on){ mouse.down=false; TJ.fw=TJ.st=0; }
-    if(on&&!mouse.right) btns.aim.classList.remove('on'); btns.chat.style.display=NET.on?'':'none'; },150);
+    if(on&&!mouse.right) btns.aim.classList.remove('on'); btns.chat.style.display=NET.on?'':'none'; btns.pause.style.display=inMatch()?'none':''; },150);
 }
 // ================== MODO EN LÍNEA (salas con código) ==================
 // El que crea la sala es el "anfitrión": recibe los mensajes de todos y los reparte.
@@ -3398,7 +3398,7 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase(); keys[k]=true; codes[e.code]=true;
   if(e.key===' '||e.key.startsWith('Arrow')||e.key==='Backspace'||e.key==='Enter'||e.key==='Tab') e.preventDefault();
   if(state==='editor'){ if(k==='q'){ rotated=!rotated; rampDir=(rampDir+1)%4; } if(k==='z'&&(e.ctrlKey||e.metaKey)) undoEdit(); return; }
-  if(k==='escape' && !locked && (state==='play'||state==='countdown'||state==='practice')) pauseGame();
+  if(k==='escape' && !locked && state==='practice') pauseGame();
   if(state==='practice'){ if(k==='n'){ dummyMode=dummyMode?0:2; resetDummies(); } if(k==='t') resetPractice(); if(k==='e') practiceInteract(); }
   if(state==='lobby'&&k==='e') lobbyInteract();
   if(k==='m'&&state!=='editor'&&state!=='menu') toggleLoadMenu();

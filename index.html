@@ -44,7 +44,7 @@
   /* ---- portada ---- */
   #menu.cover{justify-content:space-between;padding:26px 20px 22px;backdrop-filter:none;
     background:linear-gradient(to bottom,rgba(8,10,22,.62) 0%,rgba(8,10,22,0) 26%,rgba(8,10,22,0) 56%,rgba(8,10,22,.88) 100%)}
-  #logo{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;transform:rotate(-3deg);animation:logoIn .8s cubic-bezier(.2,1.6,.4,1) both}
+  #logo{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;transform:rotate(-3deg);margin-top:11vh;animation:logoIn .8s cubic-bezier(.2,1.6,.4,1) both}
   #logo::before{content:'';position:absolute;left:50%;top:52%;width:150%;height:260%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;
     background:radial-gradient(closest-side,rgba(255,216,79,.35),rgba(255,120,60,.12) 55%,transparent 72%),
       repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 6deg,transparent 6deg 18deg);
@@ -53,7 +53,7 @@
   #logoRifle{position:absolute;left:50%;top:58%;width:clamp(360px,50vw,700px);height:auto;z-index:-1;pointer-events:none;transform:translate(-50%,-50%) rotate(-9deg);filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));animation:rifleIn 1s cubic-bezier(.2,1.5,.4,1) both}
   @keyframes rifleIn{from{transform:translate(-160%,-50%) rotate(-30deg);opacity:0}to{transform:translate(-50%,-50%) rotate(-9deg);opacity:1}}
   #logo .tag{font-size:14px;font-weight:900;letter-spacing:4px;background:linear-gradient(90deg,#ff3d5a,#ff8a1f);color:#fff;padding:5px 16px;border-radius:8px;box-shadow:0 4px 0 #8f1a2e,0 0 20px rgba(255,80,60,.6);transform:rotate(2deg)}
-  #gameName{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:0 .28em;font-weight:900;font-size:clamp(44px,7.3vw,120px);line-height:1;letter-spacing:.02em;max-width:96vw;
+  #gameName{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:0 .28em;font-weight:900;font-size:clamp(54px,9.5vw,160px);line-height:1;letter-spacing:.02em;max-width:96vw;
     filter:drop-shadow(0 3px 0 #070a1c) drop-shadow(0 3px 0 #070a1c) drop-shadow(0 3px 0 #0c1130) drop-shadow(0 4px 0 #0c1130) drop-shadow(0 18px 22px rgba(0,0,0,.55));
     animation:floaty 4s ease-in-out 1.4s infinite}
   @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
@@ -4157,7 +4157,7 @@ function render(){
   hx.clearRect(0,0,innerWidth,innerHeight); try{ renderPracticePreview(frameDt||.016); }catch(e){} if(typeof coverGroup!=='undefined') coverGroup.visible=false;
   if(state==='editor'){ renderEditor(); return; }
   if(!player){ // fondo del menú: portada con los personajes (o cámara girando)
-    const onCover=state==='menu'&&coverFigs.length; coverGroup.visible=!!onCover;
+    const onCover=state==='menu'; coverGroup.visible=!!onCover;
     if(onCover){ updateCover(frameDt||.016); coverCam(edCam); edCam.fov=42; }
     else { edCam.fov=50; const t=performance.now()/9000; edCam.position.set(Math.cos(t)*30,16,Math.sin(t)*22); edCam.lookAt(0,0,0); }
     edCam.aspect=innerWidth/innerHeight; edCam.updateProjectionMatrix();
@@ -4405,7 +4405,6 @@ function playFromEditor(){ closeEditor(); inLobby=false; setArenaVisible(true); 
 // ================== LOBBY ==================
 // salón donde caminas antes de jugar: tienda, misiones y cuadros para entrar a una partida
 const LOBBY_MAP=[
-  {t:'platform',x:300,y:340,w:100,h:30},{t:'platform',x:800,y:340,w:100,h:30},     // bancas
   {t:'crate',x:1000,y:630,w:50,h:50},{t:'crate',x:1050,y:650,w:50,h:50},{t:'barrel',x:330,y:600,w:40,h:40},
 ];
 const PADS=[
@@ -5565,17 +5564,22 @@ function initCover(){ initLangBtn(); $('nameBtn').onclick=openNames; $('nameBack
 // los personajes de la portada: tu avatar en el centro con tu arma y dos amigos haciendo emotes
 const coverGroup=new THREE.Group(); scene.add(coverGroup); let coverFigs=[];
 const COVER_POS={x:300,y:375};
+// cancioncita de entrada: ti, ti, ti, tiiin (suena una vez al abrir el juego)
+let introPlayed=false;
+function playIntroJingle(){ if(introPlayed) return; initAudio(); if(!ac) return;
+  const go=()=>{ if(introPlayed) return; introPlayed=true; const t0=ac.currentTime+.05;
+    [[784,0,.14],[988,.17,.14],[1175,.34,.14],[1568,.55,.7]].forEach(([f,at,d])=>{ for(const [mul,vol,type] of [[1,.07,'square'],[2,.025,'sine'],[.5,.04,'triangle']]){
+      const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.value=f*mul; g.gain.setValueAtTime(0,t0+at); g.gain.linearRampToValueAtTime(vol,t0+at+.015); g.gain.exponentialRampToValueAtTime(.0001,t0+at+d);
+      o.connect(g); g.connect(ac.destination); o.start(t0+at); o.stop(t0+at+d+.05); } });
+    const n=document.getElementById('gameName'); if(n){ n.style.animation='none'; void n.offsetWidth; n.style.animation=''; } };
+  if(ac.state==='running') go(); else ac.resume().then(()=>{ if(ac.state==='running') go(); }).catch(()=>{}); }
+// los navegadores solo dejan sonar después de tocar o pulsar algo: suena con lo primero que haga el jugador
+addEventListener('pointerdown',()=>{ if(state==='menu') playIntroJingle(); },{once:true,capture:true});
+addEventListener('keydown',()=>{ if(state==='menu') playIntroJingle(); },{once:true,capture:true});
+setTimeout(()=>{ try{ playIntroJingle(); }catch(e){} },400);
 function buildCover(){
   coverGroup.clear(); coverFigs=[];
-  const pod=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.6,.25,40),new THREE.MeshStandardMaterial({color:0x2a2f4a,roughness:.5,metalness:.3})); pod.position.y=.12; pod.receiveShadow=true; coverGroup.add(pod);
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(3.45,.07,8,60),new THREE.MeshBasicMaterial({color:0xffd84f})); ring.rotation.x=Math.PI/2; ring.position.y=.26; coverGroup.add(ring);
-  const looks=[myLook(), {skin:SKINS[0],hat:'boy',hair:0x8a4a22,shirt:'hoodie',shirtColor:0x3ddc84,pants:0x2d3550,face:'smile',shoes:0xffffff}, {skin:SKINS[1],hat:'girl',hair:0x8a4a22,shirt:'star',shirtColor:0xff7ab8,pants:0x3b3b6b,face:'lashes',shoes:0xffffff}], cols=['#2fa8ff','#3ddc84','#ff7ab8'];
-  const at=[[0,0],[-.5,-2.1],[-.5,2.1]];
-  looks.forEach((lk,i)=>{ const m=buildFighterMesh(new THREE.Color(cols[i]),lk); m.position.set(at[i][0],.25,at[i][1]); m.rotation.y=(i===0?0:i===1?-.22:.22);
-    m.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.frustumCulled=false; } });
-    const wi=i===0?(profile.loadout.primary!=null?profile.loadout.primary:(profile.loadout.secondary!=null?profile.loadout.secondary:0)):[0,2,5][Math.floor(Math.random()*3)];
-    if(m.userData.gun){ m.userData.gun.clear&&m.userData.gun.clear(); buildGun(m.userData.gun,wi); }
-    coverGroup.add(m); coverFigs.push({mesh:m,vx:0,vy:0,onGround:true,bob:0,pitch:i===0?-.05:0,weapon:wi,reloadT:0,kick:0,swing:0,phaseT:i,hero:i===0}); });
+  // la portada ya no tiene personajes: solo el paisaje y el nombre del juego
   coverGroup.position.set(0,0,40); coverGroup.rotation.y=Math.PI/2;   // afuera de la arena, mirando al paisaje
 }
 function updateCover(dt){

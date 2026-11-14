@@ -127,7 +127,7 @@
 <button id="micFloat" class="hidden">🎤 HABLAR</button>
 <div id="chatBox" class="hidden">
   <div id="chatLog"></div>
-  <div id="chatBar"><input id="chatIn" maxlength="120" placeholder="Escribe y pulsa Enter…" autocomplete="off"><button id="chatSend">➤</button><button id="micBtn" title="Chat de voz">🎤</button></div>
+  <div id="chatBar"><input id="chatIn" maxlength="120" placeholder="Mensaje para tus amigos…" autocomplete="off"><button id="chatSend">➤</button><button id="micBtn" title="Chat de voz">🎤</button></div>
   <div id="chatHint">Enter = escribir · Y = micrófono</div>
 </div>
 <div id="rotate"><div style="font-size:70px">📱↻</div>Este juego se ve mejor con el celular acostado<button class="go" id="rotLock">🔄 PONER HORIZONTAL</button><button id="rotSkip">Jugar así</button><div style="font-size:14px;opacity:.7;font-weight:500">Si no gira, revisa que la rotación automática de tu celular esté activada.</div></div>
@@ -269,6 +269,19 @@
   <div style="font-size:20px;font-weight:700;max-width:520px;text-align:center">Mira un anuncio corto y te regalamos <b style="color:#ffd84f">2 🔑</b></div>
   <div id="adMsg" style="font-size:20px;font-weight:800;min-height:28px;color:#ffd84f;text-align:center;max-width:560px"></div>
   <div class="row"><button class="go" id="adYes" style="background:linear-gradient(90deg,#3ddc84,#2fa8ff)">✅ Sí, quiero un anuncio</button><button id="adNo">❌ No, gracias</button></div>
+</div>
+
+<div id="wpInfo" class="screen hidden" style="z-index:8;justify-content:center">
+  <div id="wpCard" style="background:rgba(14,18,36,.94);border:3px solid #2fa8ff;border-radius:20px;padding:16px 22px;width:min(560px,92vw);cursor:pointer;text-align:left;box-shadow:0 10px 40px rgba(0,0,0,.6)">
+    <img id="wpImg" alt="" style="width:100%;height:auto;border-radius:12px;background:radial-gradient(#2a3354,#121628)">
+    <div id="wpName" style="font-size:32px;font-weight:900;margin-top:6px"></div>
+    <div id="wpDesc" style="font-size:17px;opacity:.85;margin-bottom:8px"></div>
+    <div id="wpStats" style="font-size:16px;line-height:1.6"></div>
+    <div id="wpHint" style="margin-top:10px;font-size:18px;font-weight:800;color:#9fe6ff;text-align:center">🖱️ Haz clic izquierdo para ver cuánto vale</div>
+    <div id="wpPrice" class="hidden" style="margin-top:10px;text-align:center;font-size:20px;font-weight:800"><div id="wpCost"></div><div id="wpHave" style="font-size:17px;margin-top:4px"></div></div>
+    <div id="wpMsg" style="text-align:center;font-weight:900;color:#3ddc84;min-height:24px;font-size:18px"></div>
+  </div>
+  <div class="row"><button id="wpBuy" class="go hidden" style="background:linear-gradient(90deg,#ffb020,#ff6a3d)">🛒 COMPRAR</button><button id="wpClose">Cerrar</button></div>
 </div>
 
 <div id="rankScr" class="screen hidden" style="z-index:7;justify-content:flex-start;overflow-y:auto;padding-top:22px">
@@ -1304,7 +1317,11 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","📺 ANUNCIO +2 🔑":"📺 AD +2 🔑","¿Quieres un anuncio?":"Do you want to watch an ad?","✅ Sí, quiero un anuncio":"✅ Yes, show me an ad","❌ No, gracias":"❌ No, thanks",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
+"Vale":"Costs","Gratis":"Free","✅ Ya es tuya · EQUIPAR":"✅ It's yours · EQUIP","¡Equipada!":"Equipped!","No te alcanzan las llaves":"Not enough keys","Ranura":"Slot","Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility",
+"Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda":"Uses per round","⬅ VOLVER AL LOBBY":"⬅ BACK TO LOBBY","✅ TUYA":"✅ YOURS",
+"Máximo 2 amigos (3 personas hablando)":"Max 2 friends (3 people talking)","➕ Amigo":"➕ Friend","✅ Amigo":"✅ Friend","💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.":"💬🎤 Chat and voice are only with your friends (max 2). Tap ➕ Friend.",
+"Agrega amigos en la sala (➕ Amigo) para hablar. Máximo 2.":"Add friends in the room (➕ Friend) to talk. Max 2.","Mensaje para tus amigos…":"Message to your friends…","pulsa E para ver cada arma":"press E to see each weapon","📺 ANUNCIO +2 🔑":"📺 AD +2 🔑","¿Quieres un anuncio?":"Do you want to watch an ad?","✅ Sí, quiero un anuncio":"✅ Yes, show me an ad","❌ No, gracias":"❌ No, thanks",
 "Mira un anuncio corto y te regalamos":"Watch a short ad and we give you","📺 ANUNCIO":"📺 AD","Pulsa E: ANUNCIO +2 🔑":"Press E: AD +2 🔑","ANUNCIO +2 🔑":"AD +2 🔑",
 "Cargando anuncio…":"Loading ad…","✅ ¡Ganaste 2 🔑!":"✅ You got 2 🔑!","No hay anuncio ahora. Intenta en un rato.":"No ad right now. Try again in a while.",
 "Los anuncios funcionan en la versión de CrazyGames del juego.":"Ads work in the CrazyGames version of the game.","¿Quieres un anuncio? +2 🔑 por cada anuncio":"Want an ad? +2 🔑 for each ad","🏆 TOP 20":"🏆 TOP 20","🏆 LOS 20 MEJORES":"🏆 TOP 20 PLAYERS","LOS 20 MEJORES":"TOP 20 PLAYERS","Los jugadores con más nivel de todo el mundo · cada partida ganada sube 1 nivel":"The highest-level players in the world · every match you win = +1 level",
@@ -1431,6 +1448,10 @@ const I18N_RX = [
   [/^Tu puesto: #(\d+) de 20$/, m=>`Your spot: #${m[1]} of 20`],
   [/^Aún no estás en el top 20 · tu nivel: (\d+)$/, m=>`Not in the top 20 yet · your level: ${m[1]}`],
   [/^(\d+) ganadas$/, m=>`${m[1]} wins`],
+  [/^Pulsa E: ver (.+)$/, m=>`Press E: see ${T(m[1])}`],
+  [/^Tienes (\d+) 🔑 · vuelve por el túnel$/, m=>`You have ${m[1]} 🔑 · go back through the tunnel`],
+  [/^Te faltan (\d+) 🔑$/, m=>`You need ${m[1]} more 🔑`],
+  [/^🎉 ¡Compraste (.+)!$/, m=>`🎉 You bought ${T(m[1])}!`],
   [/^Ronda (\d+) · (.+)$/, m=>`Round ${m[1]} · ${T(m[2])}`],
   [/^ALIADO (\d+)$/, m=>`ALLY ${m[1]}`],[/^ROJO (\d+)$/, m=>`RED ${m[1]}`],[/^AZUL (\d+)$/, m=>`BLUE ${m[1]}`],
   [/^Error de conexión: (.+)$/, m=>`Connection error: ${m[1]}`],
@@ -4381,7 +4402,6 @@ function playFromEditor(){ closeEditor(); inLobby=false; setArenaVisible(true); 
 // ================== LOBBY ==================
 // salón donde caminas antes de jugar: tienda, misiones y cuadros para entrar a una partida
 const LOBBY_MAP=[
-  {t:'block',x:30,y:390,w:40,h:240},  {t:'platform',x:110,y:440,w:40,h:150},     // tienda (pared + mostrador)
   {t:'platform',x:300,y:340,w:100,h:30},{t:'platform',x:800,y:340,w:100,h:30},     // bancas
   {t:'crate',x:1000,y:630,w:50,h:50},{t:'crate',x:1050,y:650,w:50,h:50},{t:'barrel',x:330,y:600,w:40,h:40},
 ];
@@ -4392,7 +4412,6 @@ const PADS=[
   {mode:'friend',label:'2 VS 2 AMIGO', x:900, y:80, w:150, h:170, color:'#c04fff', foes:2, sub:'pantalla dividida'},
 ];
 const KIOSKS=[
-  {id:'shop',     x:190, y:515, label:'TIENDA'},
   {id:'rank',     x:1080, y:560, label:'LOS 20 MEJORES'},
   {id:'ad',       x:125, y:250, label:'ANUNCIO +2 🔑'},
 ];
@@ -4513,26 +4532,10 @@ function buildLobby(){
   }
   // portal a la práctica (lado derecho)
   { const pt=makeScreen('practice',lobbyGroup); pt.position.set(toX(1162),0,toZ(260)); pt.rotation.y=-Math.PI/2; lobbyGroup.add(pt); }
-  // tienda
-  makeSign(signTex([{t:'🛒 TIENDA',size:90},{t:'armas con llaves',size:40}],'#ff8a3d'), 4.5, 2.25, toX(75), 4.2, toZ(515), Math.PI/2);
-  const awn=new THREE.Mesh(new THREE.BoxGeometry(1.8,.15,6.4),new THREE.MeshStandardMaterial({color:0xff8a3d})); awn.position.set(toX(115),3,toZ(515)); awn.rotation.z=-.25; lobbyGroup.add(awn);
-  // armas en exhibición sobre el mostrador
-  [0,1,2,6].forEach((wi,i)=>{ const g=new THREE.Group(); buildGun(g,wi); g.position.set(toX(130),1.55,toZ(465+i*35)); g.rotation.y=Math.PI/2; g.scale.setScalar(1.3); lobbyGroup.add(g); });
-  const keeper=buildFighterMesh(new THREE.Color('#3b4a2a'),{skin:SKINS[1],hat:'cap',shirt:'vest',shirtColor:0x4b5a34,capColor:0x2a2f20,pants:0x3a3324,face:'determined',sleeves:'long',shoes:0x2a2018,acc:'chain'}); keeper.position.set(toX(90),0,toZ(515)); keeper.rotation.y=0; lobbyGroup.add(keeper);
-  keeper.userData.fake={mesh:keeper,vx:0,vy:0,onGround:true,bob:0,pitch:0,weapon:12,reloadT:0,kick:0,swing:0,phaseT:2}; lobbyNPCs.push(keeper.userData.fake);
-  { const L=lobbyGroup, M=(c,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:.8,...o}), add=(geo,m,x,y,z)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); o.castShadow=true; L.add(o); return o; };
-    const wx=toX(70)+.06;
-    add(new THREE.BoxGeometry(.08,2.4,8.6),M(0x6b4a2a),wx,1.75,toZ(510));                                   // tablero de madera en la pared
-    for(let i=0;i<4;i++) add(new THREE.BoxGeometry(.1,.06,8.6),M(0x4a3018),wx+.02,.75+i*.66,toZ(510));       // repisas
-    ['rifle','shotgun','sniper','smg','rocket','minigun','gl','revolver'].forEach((k,i)=>{ const w=WEAPONS.find(w=>w.kind===k&&!w.removed); if(!w) return; const g=new THREE.Group(); buildGun(g,w.id);
-      g.position.set(wx+.12,1.05+(i%3)*.66,toZ(420+Math.floor(i/3)*70+(i%3)*18)); g.rotation.y=Math.PI/2; g.rotation.x=-.25; g.scale.setScalar(1.5); L.add(g);
-      for(const dz of [-.25,.25]) add(new THREE.BoxGeometry(.14,.03,.03),M(0x222222,{metalness:.7,roughness:.3}),wx+.07,g.position.y-.1,g.position.z+dz); });
-    // caja registradora, cajas de munición y lámpara
-    add(new THREE.BoxGeometry(.5,.32,.6),M(0x2a2f3a,{metalness:.5,roughness:.4}),toX(130),1.56,toZ(580)); add(new THREE.BoxGeometry(.3,.22,.5),M(0x8fd0a0,{emissive:0x1a4a2a}),toX(126),1.82,toZ(580)).rotation.z=.5;
-    for(const [dx,dz,h] of [[0,0,0],[.0,.55,0],[.02,.25,.36]]) add(new THREE.BoxGeometry(.5,.34,.5),M(0x4b5a34),toX(150)+dx,.17+h,toZ(610)+dz);
-    add(new THREE.BoxGeometry(.7,.5,.9),M(0x8a5a2b),toX(155),.25,toZ(420)); add(new THREE.BoxGeometry(.72,.06,.92),M(0x5a3a18),toX(155),.5,toZ(420));
-    for(let i=0;i<5;i++) add(new THREE.SphereGeometry(.09,10,8),new THREE.MeshBasicMaterial({color:0xfff2b0}),toX(140),2.75,toZ(450+i*32));   // foquitos del toldo
-    const lamp=new THREE.PointLight(0xffd9a0,.7,9); lamp.position.set(toX(125),2.6,toZ(515)); L.add(lamp); }
+  // túnel hacia la sala de armas (donde estaba la tienda)
+  buildTunnel(lobbyGroup,0,232,523,toX,toZ,232/U);
+  makeSign(signTex([{t:'🛒 TIENDA',size:90},{t:'entra por el túnel',size:40}],'#ff8a3d'), 4.5, 2.0, toX(240), 3.9, toZ(523), Math.PI/2);
+  for(const s2 of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.3,3.2,.3),new THREE.MeshStandardMaterial({color:0x1b1e2c,metalness:.6,roughness:.4})); post.position.set(toX(236),1.6,toZ(523)+s2*2.7); lobbyGroup.add(post); }
   // pantalla de anuncios (lado izquierdo)
   { const ab=makeAdBoard(); ab.position.set(toX(48),0,toZ(250)); ab.rotation.y=Math.PI/2; lobbyGroup.add(ab); }
   // tablero de los 20 mejores (lado derecho)
@@ -4541,8 +4544,9 @@ function buildLobby(){
 }
 function refreshDiffSign(){ if(diffSign){ diffSign.material.map=signTex([{t:'DIFICULTAD',size:56},{t:DIFF_NAMES[difficulty],size:70}],'#444c66'); diffSign.material.needsUpdate=true; } }
 let inLobby=false, padT=0, curPad=null, uiOpen=false, lobbyHint='';
-function setArenaVisible(arena){ lobbyGroup.visible=!arena; teamZones.forEach(z=>z.visible=arena); practiceGroup.visible=false; }
+function setArenaVisible(arena){ lobbyGroup.visible=!arena; teamZones.forEach(z=>z.visible=arena); practiceGroup.visible=false; if(window.ARMG) ARMG.visible=false; }
 function goLobby(){
+  ARMORY=false; if(window.ARMG) ARMG.visible=false; for(const id of ['wpInfo','adScr','rankScr']) $(id).classList.add('hidden');
   for(const f of fighters) scene.remove(f.mesh); clearEffects(); clearDebris();
   for(const b of bullets) if(b.mesh) b.mesh.visible=false; for(const t of throws) scene.remove(t.mesh);
   bullets=[]; throws=[]; texts=[];
@@ -4550,7 +4554,7 @@ function goLobby(){
   $('editor').classList.add('hidden'); if(state==='editor') setEditorVisible(false);
   setWorld(1200,750); applyTheme('default');
   if(!lobbyGroup.children.length) buildLobby();
-  loadMap(LOBBY_MAP); setArenaVisible(false); inLobby=true; uiOpen=false;
+  loadMap(LOBBY_MAP); WALLS.push({t:'block',x:0,y:445,w:232,h:24},{t:'block',x:0,y:577,w:232,h:24}); setArenaVisible(false); inLobby=true; uiOpen=false;
   if(profile.refund){ toasts.push({txt:'Se quitó el Botiquín del juego: te devolvimos '+MEDKIT.cost+' 🔑',life:5}); profile.refund=false; saveProfile(); }
   p2=null; player=makeFighter({x:600,y:510},'#2fa8ff',false,0,'TÚ',myLook(),{...profile.loadout}); player.angle=-Math.PI/2; fighters=[player];
   state='lobby'; padT=0; curPad=null;
@@ -4777,6 +4781,7 @@ function updateLobby(dt){
   if(mouse.down&&WEAPONS[p.weapon].melee) shoot(p);           // en el lobby solo se puede dar golpes al aire
   scytheDash(p);
   // cuadros
+  if(p.x<36&&Math.abs(p.y-523)<52&&p.z<1){ startArmory(); return; }   // túnel a la sala de armas
   if(p.x>1158&&Math.abs(p.y-260)<122&&p.z<1){ beep(520,.12,'sine',.07); beep(880,.2,'sine',.05); startPractice(); return; }   // portal
   const pad=PADS.find(q=>p.x>q.x&&p.x<q.x+q.w&&p.y>q.y&&p.y<q.y+q.h&&p.z<.5);
   if(pad!==curPad){ curPad=pad; padT=0; if(pad) beep(600,.08,'sine',.06); }
@@ -4934,6 +4939,7 @@ function updatePoppers(dt){
     if(!pp.up){ pp.t-=dt; if(pp.t<=0){ pp.up=true; beep(600,.05,'triangle',.03); } } }
 }
 function startPractice(){
+  ARMORY=false; if(window.ARMG) ARMG.visible=false;
   for(const f of fighters) scene.remove(f.mesh); clearEffects(); clearDebris();
   for(const b of bullets) if(b.mesh) b.mesh.visible=false; for(const t of throws) scene.remove(t.mesh); bullets=[]; throws=[]; texts=[];
   inLobby=false; lobbyGroup.visible=false; teamZones.forEach(z=>z.visible=false);
@@ -4964,6 +4970,7 @@ function endReflex(){ const avg=reflex.times.length?(reflex.times.reduce((a,b)=>
   toasts.push({txt:`Reflejos: ${reflex.score} muñecos · ${avg.toFixed(2)} s promedio${rec?' · ¡NUEVO RÉCORD!':''}`,life:5});
   for(const d of fighters.filter(x=>x.reflex)) scene.remove(d.mesh); fighters=fighters.filter(x=>!x.reflex); reflex=null; beep(523,.2,'sine',.07); }
 function practiceInteract(){
+  if(ARMORY) return armoryInteract();
   if(walkMode) return;
   let k=null, bd=110; for(const q of PKIOSKS){ const d=Math.hypot(player.x-q.x,player.y-q.y); if(d<bd){bd=d;k=q;} }
   if(!k) return;
@@ -4979,6 +4986,7 @@ function practiceInteract(){
 let practiceHint='';
 function updateDummies(dt){
   player.hp=100; player.dead=false;
+  if(ARMORY){ armoryUpdate(dt); return; }
   if(!walkMode&&player.x<34&&Math.abs(player.y-1250)<122){ beep(880,.12,'sine',.07); goLobby(); return; }   // portal de salida
   const t=performance.now()/1000;
   // las cajas y barriles destruidos vuelven a aparecer
@@ -5006,6 +5014,7 @@ function updateDummies(dt){
   practiceHint = k ? ((k.id==='reflex'&&reflex)?'':`Pulsa E: ${k.label}`) : '';
 }
 function drawPracticeHUD(){
+  if(ARMORY) return drawArmoryHUD();
   const cx=innerWidth/2;
   if(walkMode){ hx.fillStyle='rgba(15,18,30,.65)'; hx.fillRect(cx-260,8,520,52); hx.textAlign='center'; hx.font='800 20px Rubik'; hx.fillStyle='#fff'; hx.fillText('🚶 PASEO POR TU MAPA',cx,32);
     hx.font='500 13px Rubik'; hx.fillStyle='rgba(255,255,255,.85)'; hx.fillText('Recorre tu mapa sin enemigos · Esc → Editar mapa',cx,50);
@@ -5154,12 +5163,16 @@ function netOnLeft(id){ if(state==='over'&&NET.inGame&&!RM.done){ RM.votes[id]=f
   const f=fighters.find(x=>x.netId===id); if(f){ toasts.push({txt:f.label+' salió de la partida',life:2.5}); if(!f.dead) killed(f,f,f.weapon,true); }
   if(!NET.inGame) netShowRoom(); }
 function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map}); netShowRoom(); voiceSync(); }
-function netShowRoom(){ $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
+function netShowRoom(){ try{ frAuto(); }catch(e){} $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
   $('netHostBox').classList.toggle('hidden',!NET.host); $('netWait').classList.toggle('hidden',NET.host);
   for(const t of [0,1]){ const box=$('netTeam'+t); box.innerHTML='';
     NET.players.filter(p=>p.team===t).forEach(p=>{ const d=document.createElement('div'); d.style.cssText='background:rgba(10,12,24,.6);border-radius:10px;padding:8px;margin-top:6px;font-weight:800;cursor:'+(NET.host?'pointer':'default');
       d.textContent=(p.id===NET.myId?'⭐ ':'')+p.name+'  · nivel '+p.level+(p.id===NET.players[0].id?' 👑':'');
+      if(p.id!==NET.myId){ const fb=document.createElement('button'); const on=(NET.fr||[]).includes(p.id), mutual=isFriend(p.id);
+        fb.textContent=on?T('✅ Amigo')+(mutual?' 💬':' …'):T('➕ Amigo'); fb.style.cssText='margin-left:8px;padding:4px 10px;font-size:13px;'+(on?'background:linear-gradient(90deg,#3ddc84,#2fa8ff)':'');
+        fb.onclick=(e)=>{ e.stopPropagation(); frToggle(p); }; d.appendChild(fb); }
       if(NET.host) d.onclick=()=>{ p.team=1-p.team; netBroadcastRoom(); }; box.appendChild(d); }); }
+  if(!$('frNote')){ const n=document.createElement('div'); n.id='frNote'; n.style.cssText='font-size:14px;font-weight:700;color:#9fe6ff;margin:6px 0;text-align:center'; n.textContent=T('💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.'); const rowEl=$('netTeam0').parentNode.parentNode; rowEl.parentNode.insertBefore(n,rowEl.nextSibling); }
   const sel=$('netMap'); if(!sel.options.length){ sel.add(new Option('🎲 Al azar',-1)); ARENAS.forEach((a,i)=>sel.add(new Option((a.emoji||'🗺️')+' '+a.name,i))); sel.onchange=()=>{ NET.map=+sel.value; }; }
   $('netGo').style.opacity=NET.players.length>=2?1:.45; }
 function netGo(){ if(!NET.host) return; if(NET.players.length<2){ netStatus('Necesitas al menos un amigo en la sala','#ff8fa3'); return; }
@@ -5207,10 +5220,11 @@ function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw
     const s=JSON.stringify(m); for(const id in NET.conns) if(id!==fromConn){ try{ NET.conns[id].send(s); }catch(e){} } }
   switch(m.t){
     case 'full': netStatus(m.inGame?'Esa sala ya está jugando. Espera a que termine.':'La sala está llena (máximo 6).','#ff8fa3'); return;
-    case 'room': NET.players=m.players; NET.map=m.map; voiceSync(); if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
+    case 'room': NET.players=m.players; NET.map=m.map; frAuto(); voiceSync(); if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
     case 'start': netStartMatch(m.players,m.map); return;
     case 'left': netOnLeft(m.id); NET.players=NET.players.filter(p=>p.id!==m.id); voiceDrop(m.id); return;
-    case 'chat': chatAdd(m.n,m.txt,m.c); return; }
+    case 'chat': if(isFriend(m.from)) chatAdd(m.n,m.txt,m.c); return;
+    case 'fr': NET.frOf[m.from]=Array.isArray(m.list)?m.list:[]; frChanged(); try{ if(!NET.inGame&&!$('netRoom').classList.contains('hidden')) netShowRoom(); }catch(e){} return; }
   if(!NET.inGame) return;
   const f=netById(m.from);
   switch(m.t){
@@ -5245,18 +5259,18 @@ function chatIsOpen(){ return document.activeElement===$('chatIn'); }
 let chatOpenFlag=false;
 function chatOpen(){ chatOpenFlag=true; for(const k in keys) keys[k]=false; for(const k in codes) codes[k]=false; mouse.down=false; const b=$('chatBox'); b.classList.add('open'); if(!TOUCH) releaseLock(); setTimeout(()=>$('chatIn').focus(),30); }
 function chatClose(){ chatOpenFlag=false; $('chatBox').classList.remove('open'); $('chatIn').blur(); if(NET.inGame&&!TOUCH&&(state==='play'||state==='countdown'||state==='roundEnd')) requestLock(); }
-function chatSend(){ const t=$('chatIn').value.trim().slice(0,120); $('chatIn').value=''; if(t&&NET.on){ const me=netMe(); const c=player?player.color:'#ffd84f'; netSend({t:'chat',n:me.name,txt:t,c}); chatAdd(me.name,t,c); } chatClose(); }
+function chatSend(){ const t=$('chatIn').value.trim().slice(0,120); $('chatIn').value=''; if(t&&NET.on&&!NET.players.some(p=>isFriend(p.id))){ chatSys(T('Agrega amigos en la sala (➕ Amigo) para hablar. Máximo 2.')); chatClose(); return; } if(t&&NET.on){ const me=netMe(); const c=player?player.color:'#ffd84f'; netSend({t:'chat',n:me.name,txt:t,c}); chatAdd(me.name,t,c); } chatClose(); }
 function chatAdd(name,txt,color){ const log=$('chatLog'), d=document.createElement('div'), b=document.createElement('b'); b.textContent=name+':'; b.style.color=color||'#ffd84f';
   d.appendChild(b); d.appendChild(document.createTextNode(txt)); log.appendChild(d); while(log.children.length>8) log.removeChild(log.firstChild);
   setTimeout(()=>d.classList.add('old'),9000); beep(1200,.04,'sine',.03); }
 function chatSys(txt){ chatAdd('📢',txt,'#9fe6ff'); }
 // ---------- chat de voz (cada uno que activa el micrófono llama a los demás) ----------
 const VOICE={stream:null,calls:{},audio:{}};
-function voiceListen(peer){ peer.on('call',c=>{ c.answer(); c.on('stream',st=>voicePlay(c.peer,st)); c.on('close',()=>voiceStop(c.peer)); c.on('error',()=>voiceStop(c.peer)); }); }
+function voiceListen(peer){ peer.on('call',c=>{ if(!isFriend(c.peer)){ try{ c.close(); }catch(e){} return; } c.answer(); c.on('stream',st=>voicePlay(c.peer,st)); c.on('close',()=>voiceStop(c.peer)); c.on('error',()=>voiceStop(c.peer)); }); }
 function voicePlay(id,st){ let a=VOICE.audio[id]; if(!a){ a=new Audio(); a.autoplay=true; a.playsInline=true; VOICE.audio[id]=a; } a.srcObject=st; a.play().catch(()=>{ chatSys('Toca la pantalla para escuchar a tus amigos'); addEventListener('pointerdown',()=>a.play().catch(()=>{}),{once:true}); }); }
 function voiceStop(id){ const a=VOICE.audio[id]; if(a){ a.srcObject=null; delete VOICE.audio[id]; } }
 function voiceDrop(id){ voiceStop(id); const c=VOICE.calls[id]; if(c){ try{ c.close(); }catch(e){} delete VOICE.calls[id]; } }
-function voiceSync(){ if(!VOICE.stream||!NET.peer) return; for(const p of NET.players){ if(p.id===NET.myId||VOICE.calls[p.id]) continue; try{ VOICE.calls[p.id]=NET.peer.call(p.id,VOICE.stream); }catch(e){} } }
+function voiceSync(){ if(!VOICE.stream||!NET.peer) return; for(const p of NET.players){ if(p.id===NET.myId||VOICE.calls[p.id]||!isFriend(p.id)) continue; try{ VOICE.calls[p.id]=NET.peer.call(p.id,VOICE.stream); }catch(e){} } }
 async function voiceToggle(){ if(!NET.on){ toasts.push({txt:'El chat de voz es para el modo en línea',life:1.5}); return; }
   if(VOICE.stream){ voiceOff(); chatSys('Apagaste tu micrófono'); netSend({t:'chat',n:'📢',txt:netMe().name+' apagó el micrófono',c:'#9fe6ff'}); return; }
   try{ VOICE.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
@@ -5266,6 +5280,144 @@ function micUI(){ const on=!!VOICE.stream; $('micBtn').classList.toggle('on',on)
 function voiceOff(quiet){ if(VOICE.stream){ VOICE.stream.getTracks().forEach(t=>t.stop()); VOICE.stream=null; }
   for(const id in VOICE.calls){ try{ VOICE.calls[id].close(); }catch(e){} } VOICE.calls={}; try{ micUI(); }catch(e){}
   if(quiet){ for(const id in VOICE.audio) voiceStop(id); } }
+// ===================== SALA DE ARMAS (se entra por el túnel del lobby) =====================
+// Las armas flotan sobre pedestales. Te acercas y pulsas E: ves qué hace. Clic izquierdo: precio y botón COMPRAR.
+const AHW=1600, AHH=900, AT_Y=450;           // tamaño de la sala y altura (y) del túnel
+var ARMORY=false, armoryHint='', ARM_PEDS=[], armNear=null;
+const armoryGroup=new THREE.Group(); armoryGroup.visible=false; scene.add(armoryGroup); window.ARMG=armoryGroup;
+const aX=px=>px/U-AHW/(2*U), aZ=py=>py/U-AHH/(2*U);
+function armoryWeapons(){ return WEAPONS.filter(w=>!w.removed&&w.kind!=='fists'); }
+const ARMORY_MAP=[];
+const ARM_TUNNEL_WALLS=[ {t:'block',x:0,y:AT_Y-70,w:270,h:20}, {t:'block',x:0,y:AT_Y+50,w:270,h:20} ];   // paredes invisibles del túnel
+function armPedSpots(){ const out=[], rows=[150,300,600,750], n=armoryWeapons().length, cols=Math.ceil(n/rows.length);
+  for(let r=0;r<rows.length;r++) for(let c=0;c<cols;c++) out.push({x:420+c*(1100/Math.max(1,cols-1)),y:rows[r]}); return out; }
+// túnel con arcos de luz (sirve para el lobby y para la sala)
+function buildTunnel(group, x0, x1, zc, tx, tz, len, R=2.6){ const L=len, cx=(tx(x0)+tx(x1))/2;
+  const shell=new THREE.Mesh(new THREE.CylinderGeometry(R,R,L,28,1,true,0,Math.PI),new THREE.MeshStandardMaterial({color:0x2a3040,map:GTEX.brushed,metalness:.6,roughness:.45,side:THREE.DoubleSide}));
+  shell.rotation.z=Math.PI/2; shell.position.set(cx,0,tz(zc)); group.add(shell);
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(L,R*2-.2),new THREE.MeshStandardMaterial({color:0x14171f,metalness:.4,roughness:.3})); fl.rotation.x=-Math.PI/2; fl.position.set(cx,.02,tz(zc)); fl.receiveShadow=true; group.add(fl);
+  const n=Math.max(3,Math.round(L/1.6)), cols=[0x2fa8ff,0xffb020];
+  for(let i=0;i<=n;i++){ const x=tx(x0)+i*(L/n), m=new THREE.MeshBasicMaterial({color:cols[i%2]});
+    const arc=new THREE.Mesh(new THREE.TorusGeometry(R-.05,.07,8,32,Math.PI),m); arc.rotation.y=Math.PI/2; arc.position.set(x,0,tz(zc)); group.add(arc);
+    const rib=new THREE.Mesh(new THREE.TorusGeometry(R+.02,.12,8,32,Math.PI),new THREE.MeshStandardMaterial({color:0x1a1d26,metalness:.7,roughness:.4})); rib.rotation.y=Math.PI/2; rib.position.set(x+.08,0,tz(zc)); group.add(rib); }
+  for(const s of [-1,1]){ const strip=new THREE.Mesh(new THREE.BoxGeometry(L,.05,.08),new THREE.MeshBasicMaterial({color:0x2fa8ff})); strip.position.set(cx,.06,tz(zc)+s*(R-.25)); group.add(strip); }
+  const lt=new THREE.PointLight(0x9fd0ff,.8,L+4); lt.position.set(cx,1.8,tz(zc)); group.add(lt); }
+function nameTag(txt,col){ const c=document.createElement('canvas'); c.width=512; c.height=96; const g=c.getContext('2d');
+  g.fillStyle='rgba(10,14,30,.78)'; g.beginPath(); g.roundRect?g.roundRect(6,10,500,76,22):g.rect(6,10,500,76); g.fill(); g.strokeStyle=col; g.lineWidth=5; g.stroke();
+  g.fillStyle='#fff'; g.textAlign='center'; let fs=46; g.font='900 '+fs+'px Rubik, Arial'; while(g.measureText(T(txt)).width>470&&fs>18){ fs--; g.font='900 '+fs+'px Rubik, Arial'; } g.fillText(T(txt),256,64);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false})); sp.scale.set(2.4,.45,1); return sp; }
+function buildArmoryRoom(){ armoryGroup.clear(); ARM_PEDS=[];
+  const dark=new THREE.MeshStandardMaterial({color:0x1d2230,map:GTEX.brushed,metalness:.55,roughness:.5}), panel=new THREE.MeshStandardMaterial({color:0x56607a,map:GTEX.stipple,metalness:.25,roughness:.6});
+  const RX0=270, RW=AHW-RX0, H=6.5;
+  // piso pulido y techo con paneles de luz
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(RW/U,AHH/U),new THREE.MeshStandardMaterial({color:0x2c3240,metalness:.4,roughness:.25})); fl.rotation.x=-Math.PI/2; fl.position.set(aX(RX0+RW/2),.015,aZ(AHH/2)); fl.receiveShadow=true; armoryGroup.add(fl);
+  for(let i=0;i<9;i++){ const ln=new THREE.Mesh(new THREE.PlaneGeometry(.06,AHH/U),new THREE.MeshBasicMaterial({color:0x2a3550})); ln.rotation.x=-Math.PI/2; ln.position.set(aX(RX0+80+i*150),.02,aZ(AHH/2)); armoryGroup.add(ln); }
+  const aisle=new THREE.Mesh(new THREE.PlaneGeometry(RW/U,3.2),new THREE.MeshStandardMaterial({color:0x8a1a1a,map:GTEX.stipple,roughness:.9})); aisle.rotation.x=-Math.PI/2; aisle.position.set(aX(RX0+RW/2),.025,aZ(AT_Y)); armoryGroup.add(aisle);   // alfombra roja
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(RW/U,AHH/U),new THREE.MeshStandardMaterial({color:0x12151c,side:THREE.DoubleSide})); ceil.rotation.x=Math.PI/2; ceil.position.set(aX(RX0+RW/2),H,aZ(AHH/2)); armoryGroup.add(ceil);
+  for(let i=0;i<6;i++) for(let j=0;j<3;j++){ const lp=new THREE.Mesh(new THREE.PlaneGeometry(3,.6),new THREE.MeshBasicMaterial({color:0xfff4dc,side:THREE.DoubleSide})); lp.rotation.x=Math.PI/2; lp.position.set(aX(RX0+130+i*220),H-.02,aZ(150+j*300)); armoryGroup.add(lp); }
+  // paredes con paneles y tiras de luz
+  const wall=(w,d,x,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,H,d),panel); m.position.set(x,H/2,z); armoryGroup.add(m); return m; };
+  wall(RW/U,.4,aX(RX0+RW/2),aZ(0)-.2); wall(RW/U,.4,aX(RX0+RW/2),aZ(AHH)+.2); wall(.4,AHH/U,aX(AHW)+.2,aZ(AHH/2));
+  wall(.4,(AT_Y-62)/U,aX(RX0)-.2,aZ((AT_Y-62)/2)); wall(.4,(AHH-AT_Y-62)/U,aX(RX0)-.2,aZ((AHH+AT_Y+62)/2)); wall(.4,1.6,aX(RX0)-.2,aZ(AT_Y)).position.y=H-.8;
+  for(const z of [aZ(0)+.02,aZ(AHH)-.02]){ for(const y of [.3,H-.3]){ const s=new THREE.Mesh(new THREE.BoxGeometry(RW/U,.06,.04),new THREE.MeshBasicMaterial({color:0xffb020})); s.position.set(aX(RX0+RW/2),y,z); armoryGroup.add(s); } }
+  // cartel grande al fondo
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(9,2.2),new THREE.MeshBasicMaterial({map:signTex([{t:'🛒 SALA DE ARMAS',size:84},{t:'pulsa E para ver cada arma',size:36}],'#c8601a'),side:THREE.DoubleSide}));
+  sg.position.set(aX(AHW)-.25,H-1.8,aZ(AT_Y)); sg.rotation.y=-Math.PI/2; armoryGroup.add(sg);
+  for(let i=0;i<5;i++) for(const yy of [200,AT_Y,700]){ const p=new THREE.PointLight(0xfff0dc,yy===AT_Y?.9:1.1,22,1.4); p.position.set(aX(RX0+150+i*280),H-1,aZ(yy)); armoryGroup.add(p); }
+  const amb=new THREE.HemisphereLight(0xdfe8ff,0x40465a,.55); armoryGroup.add(amb);
+  // túnel de entrada (y salida)
+  buildTunnel(armoryGroup,0,RX0,AT_Y,aX,aZ,RX0/U);
+  const ex=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.8),new THREE.MeshBasicMaterial({map:signTex([{t:'⬅ VOLVER AL LOBBY',size:70}],'#1f6fd0'),side:THREE.DoubleSide})); ex.position.set(aX(RX0)+.3,3.1,aZ(AT_Y)); ex.rotation.y=Math.PI/2; armoryGroup.add(ex);
+  // pedestales con armas flotando
+  const ws=armoryWeapons(), spots=armPedSpots();
+  const baseM=new THREE.MeshStandardMaterial({color:0x22262f,map:GTEX.brushed,metalness:.8,roughness:.3}), glass=new THREE.MeshStandardMaterial({color:0x9fd0ff,metalness:.2,roughness:.05,transparent:true,opacity:.35});
+  ws.forEach((w,i)=>{ const sp=spots[i]; if(!sp) return; const g=new THREE.Group(); g.position.set(aX(sp.x),0,aZ(sp.y)); armoryGroup.add(g);
+    const col=w.slot==='primary'?0x2fa8ff:w.slot==='secondary'?0x3ddc84:w.slot==='melee'?0xff8a3d:0xc04fff;
+    const b1=new THREE.Mesh(new THREE.CylinderGeometry(.7,.8,.2,32),baseM); b1.position.y=.1; b1.castShadow=true; g.add(b1);
+    const b2=new THREE.Mesh(new THREE.CylinderGeometry(.5,.62,.8,32),baseM); b2.position.y=.6; b2.castShadow=true; g.add(b2);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.58,.035,8,40),new THREE.MeshBasicMaterial({color:col})); ring.rotation.x=Math.PI/2; ring.position.y=1.02; g.add(ring);
+    const top=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.04,32),glass); top.position.y=1.03; g.add(top);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.45,.6,1.8,24,1,true),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); beam.position.y=1.95; g.add(beam);
+    const gun=new THREE.Group(); buildGun(gun,w.id); gun.updateMatrixWorld(true);
+    const bb=new THREE.Box3().setFromObject(gun), sz=bb.getSize(new THREE.Vector3()), c=bb.getCenter(new THREE.Vector3());
+    const k=2.1/Math.max(.3,sz.x,sz.y*1.5,sz.z*1.5); gun.scale.setScalar(k); gun.position.copy(c).multiplyScalar(-k);
+    const holder=new THREE.Group(); holder.add(gun); holder.position.y=2.0; g.add(holder);
+    gun.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+    const tag=nameTag(w.name,'#'+col.toString(16).padStart(6,'0')); tag.position.y=3.25; g.add(tag);
+    const own=nameTag('✅ TUYA','#3ddc84'); own.scale.set(1.3,.24,1); own.position.y=2.75; own.visible=profile.unlocked.includes(w.name); g.add(own);
+    ARM_PEDS.push({w,x:sp.x,y:sp.y,g,holder,ring,own,ph:i*.7}); });
+}
+function startArmory(){
+  for(const f of fighters) scene.remove(f.mesh); clearEffects(); clearDebris();
+  for(const b of bullets) if(b.mesh) b.mesh.visible=false; for(const t of throws) scene.remove(t.mesh); bullets=[]; throws=[]; texts=[];
+  inLobby=false; lobbyGroup.visible=false; practiceGroup.visible=false; teamZones.forEach(z=>z.visible=false);
+  setWorld(AHW,AHH); applyTheme('default'); ARMORY=true;
+  buildArmoryRoom(); armoryGroup.visible=true;
+  loadMap(ARMORY_MAP); WALLS.push(...ARM_TUNNEL_WALLS.map(o=>({...o}))); for(const p of ARM_PEDS) WALLS.push({t:'platform',x:p.x-30,y:p.y-30,w:60,h:60});
+  p2=null; player=makeFighter({x:70,y:AT_Y},'#2fa8ff',false,0,'TÚ',myLook(),{...profile.loadout}); player.angle=0; fighters=[player];
+  walkMode=false; reflex=null; state='practice'; beep(520,.12,'sine',.07); beep(780,.2,'sine',.05); requestLock();
+}
+function leaveArmory(){ ARMORY=false; armoryGroup.visible=false; goLobby(); if(player){ player.x=250; player.y=523; player.angle=0; } }
+function armoryUpdate(dt){
+  player.hp=100; player.dead=false;
+  if(player.x<26&&Math.abs(player.y-AT_Y)<50){ beep(880,.12,'sine',.07); leaveArmory(); return; }
+  const t=performance.now()/1000; let near=null, bd=110;
+  for(const p of ARM_PEDS){ p.holder.rotation.y=t*.9+p.ph; p.holder.position.y=2.0+Math.sin(t*1.6+p.ph)*.12;
+    const d=Math.hypot(player.x-p.x,player.y-p.y); if(d<bd){ bd=d; near=p; } p.ring.scale.setScalar(1); }
+  armNear=near; if(near) near.ring.scale.setScalar(1.15+Math.sin(t*6)*.05);
+  armoryHint = near ? `Pulsa E: ver ${near.w.name}` : '';
+}
+function drawArmoryHUD(){ const cx=innerWidth/2;
+  hx.fillStyle='rgba(15,18,30,.7)'; hx.fillRect(cx-230,8,460,58); hx.textAlign='center'; hx.font='900 22px Rubik'; hx.fillStyle='#ffb020'; hx.fillText(T('🛒 SALA DE ARMAS'),cx,34);
+  hx.font='700 14px Rubik'; hx.fillStyle='#fff'; hx.fillText(T('Tienes '+profile.keys+' 🔑 · vuelve por el túnel'),cx,56);
+  if(armoryHint){ hx.font='800 20px Rubik'; const w=hx.measureText(T(armoryHint)).width+40; hx.fillStyle='rgba(255,216,79,.92)'; hx.fillRect(cx-w/2,innerHeight-190,w,40); hx.fillStyle='#1a1200'; hx.fillText(T(armoryHint),cx,innerHeight-163); } }
+function armoryInteract(){ if(armNear) openWeaponInfo(armNear.w); }
+// ---- tarjeta del arma: qué hace → (clic izquierdo) precio → COMPRAR ----
+let wpCur=null;
+function wpBars(v,max){ const n=Math.max(1,Math.min(10,Math.round(v/max*10))); return '<span style="color:#ffd84f">'+'■'.repeat(n)+'</span><span style="opacity:.3">'+'■'.repeat(10-n)+'</span>'; }
+function openWeaponInfo(w){ wpCur=w; uiOpen=true; releaseLock();
+  $('wpImg').src=weaponPhoto(w); $('wpName').textContent=T(w.name); $('wpDesc').textContent=T(w.desc||'');
+  const slot={primary:'Principal',secondary:'Secundaria',melee:'Cuerpo a cuerpo',utility:'Utilidad'}[w.slot]||'';
+  let st;
+  if(w.melee) st=[['Daño',wpBars(w.dmg,60)],['Velocidad',wpBars(1/w.rate,3)],['Alcance',wpBars(w.mrange||60,100)]];
+  else if(w.util) st=[['Usos por ronda',String(w.uses)]];
+  else st=[['Daño',wpBars(w.rocket?80:w.dmg*w.pellets,90)],['Cadencia',wpBars(1/w.rate,18)],['Alcance',wpBars(w.range,1400)],['Cargador',String(w.mag)]];
+  $('wpStats').innerHTML='<div style="margin-bottom:6px;opacity:.8">'+T('Ranura')+': <b>'+T(slot)+'</b></div>'+st.map(([a,b])=>`<div style="display:flex;justify-content:space-between;gap:12px"><span>${T(a)}</span><span style="font-family:monospace">${b}</span></div>`).join('');
+  $('wpPrice').classList.add('hidden'); $('wpHint').classList.remove('hidden'); $('wpBuy').classList.add('hidden'); $('wpMsg').textContent='';
+  $('wpInfo').classList.remove('hidden'); beep(700,.06,'triangle',.05); }
+function wpShowPrice(){ const w=wpCur; if(!w) return; const own=profile.unlocked.includes(w.name), cost=w.cost||0;
+  $('wpHint').classList.add('hidden'); $('wpPrice').classList.remove('hidden');
+  $('wpCost').innerHTML=cost?`💰 ${T('Vale')} <b style="color:#ffd84f;font-size:30px">${cost} 🔑</b>`:`💰 <b style="color:#3ddc84">${T('Gratis')}</b>`;
+  $('wpHave').innerHTML=`${T('Tienes')} <b style="color:#ffd84f">${profile.keys} 🔑</b>`+(own?'':cost>profile.keys?` · <span style="color:#ff8fa3">${T('Te faltan '+(cost-profile.keys)+' 🔑')}</span>`:'');
+  const b=$('wpBuy'); b.classList.remove('hidden');
+  if(own){ b.textContent=T('✅ Ya es tuya · EQUIPAR'); b.disabled=false; b.dataset.mode='eq'; }
+  else { b.textContent=T('🛒 COMPRAR'); b.dataset.mode='buy'; b.disabled=cost>profile.keys; b.style.opacity=b.disabled?.5:1; }
+  beep(900,.05,'sine',.05); }
+function wpEquip(w){ profile.loadout[w.slot]=w.id; saveProfile(); if(player){ player.kit[w.slot]=w.id; if(!w.util){ player.ammoBy[w.id]=w.mag; setWeapon(player,w.id); player.ammo=w.mag; } } }
+function wpBuy(){ const w=wpCur; if(!w) return; const b=$('wpBuy');
+  if(b.dataset.mode==='eq'){ wpEquip(w); $('wpMsg').textContent=T('¡Equipada!'); return; }
+  if((w.cost||0)>profile.keys){ $('wpMsg').textContent=T('No te alcanzan las llaves'); return; }
+  profile.keys-=w.cost||0; if(!profile.unlocked.includes(w.name)) profile.unlocked.push(w.name); wpEquip(w); refreshKeys();
+  [523,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12,'sine',.07),i*80)); $('wpMsg').textContent=T('🎉 ¡Compraste '+w.name+'!');
+  const ped=ARM_PEDS.find(p=>p.w===w); if(ped) ped.own.visible=true; wpShowPrice(); }
+function closeWeaponInfo(){ $('wpInfo').classList.add('hidden'); wpCur=null; uiOpen=false; requestLock(); }
+function initArmoryUI(){ $('wpCard').addEventListener('mousedown',e=>{ if(e.button===0) wpShowPrice(); }); $('wpCard').addEventListener('touchstart',()=>wpShowPrice(),{passive:true});
+  $('wpBuy').onclick=wpBuy; $('wpClose').onclick=closeWeaponInfo; }
+
+// ===================== CHAT Y VOZ SOLO CON AMIGOS (tú + hasta 2 amigos) =====================
+NET.fr=NET.fr||[]; NET.frOf=NET.frOf||{};
+function isFriend(id){ return (NET.fr||[]).includes(id)&&((NET.frOf||{})[id]||[]).includes(NET.myId); }
+function frBroadcast(){ try{ netSend({t:'fr',list:NET.fr}); }catch(e){} }
+function frChanged(){ for(const id in VOICE.calls) if(!isFriend(id)) voiceDrop(id); for(const id in VOICE.audio) if(!isFriend(id)) voiceStop(id); voiceSync(); }
+function frToggle(p){ const i=NET.fr.indexOf(p.id);
+  if(i>=0){ NET.fr.splice(i,1); profile.friendNames=(profile.friendNames||[]).filter(n=>n!==p.name); }
+  else { if(NET.fr.length>=2){ netStatus(T('Máximo 2 amigos (3 personas hablando)'),'#ff8fa3'); return; } NET.fr.push(p.id); profile.friendNames=[...new Set([...(profile.friendNames||[]),p.name])].slice(-2); }
+  saveProfile(); frBroadcast(); frChanged(); netShowRoom(); }
+function frAuto(){ NET.fr=NET.fr.filter(id=>NET.players.some(p=>p.id===id)); const names=profile.friendNames||[]; let ch=false;
+  for(const p of NET.players){ if(p.id!==NET.myId&&names.includes(p.name)&&!NET.fr.includes(p.id)&&NET.fr.length<2){ NET.fr.push(p.id); ch=true; } }
+  if(ch) frChanged(); const sig=NET.players.map(p=>p.id).join(',');
+  if(ch||sig!==NET._frSig){ NET._frSig=sig; frBroadcast(); } }   // solo avisa cuando cambia algo (sin bucles)
+
 function chatTick(){ const box=$('chatBox'), inRoom=NET.on&&!NET.inGame&&!$('netScr').classList.contains('hidden')&&!$('netRoom').classList.contains('hidden');
   box.classList.toggle('hidden',!NET.on||!(NET.inGame||inRoom)); box.classList.toggle('room',inRoom);
   const want=inRoom?$('netRoom'):document.body; if(box.parentNode!==want) want.appendChild(box);
@@ -5377,7 +5529,7 @@ addEventListener('keydown',e=>{
   if(e.key===' '||e.key.startsWith('Arrow')||e.key==='Backspace'||e.key==='Enter'||e.key==='Tab') e.preventDefault();
   if(state==='editor'){ if(k==='q'){ rotated=!rotated; rampDir=(rampDir+1)%4; } if(k==='z'&&(e.ctrlKey||e.metaKey)) undoEdit(); return; }
   if(k==='escape' && !locked && state==='practice') pauseGame();
-  if(state==='practice'){ if(k==='n'){ dummyMode=dummyMode?0:2; resetDummies(); } if(k==='t') resetPractice(); if(k==='e') practiceInteract(); }
+  if(state==='practice'){ if(k==='n'&&!ARMORY){ dummyMode=dummyMode?0:2; resetDummies(); } if(k==='t'&&!ARMORY) resetPractice(); if(k==='e') practiceInteract(); }
   if(state==='lobby'&&k==='e') lobbyInteract();
   if(k==='m'&&state!=='editor'&&state!=='menu') toggleLoadMenu();
   if(player&&!player.dead&&state!=='editor'&&state!=='menu'){
@@ -5556,7 +5708,7 @@ $('loadBack').onclick=()=>{ if(loadOpen) toggleLoadMenu(); };
 profile.welcome=false;
 
 // ================== Arranque ==================
-loadMap(DEFAULT_MAP); initCover(); initSpin(); initRank(); initAds(); initNet(); buildCover(); applyGameName();
+loadMap(DEFAULT_MAP); initCover(); initSpin(); initRank(); initAds(); initArmoryUI(); initNet(); buildCover(); applyGameName();
 // calidad automática: si el juego va lento, baja la resolución y las sombras para que no se trabe
 let qLevel=0, qAcc=0, qN=0;
 function applyQuality(){ if(qLevel===1){ renderer.setPixelRatio(1); sun.shadow.mapSize.set(1024,1024); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } }

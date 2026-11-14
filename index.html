@@ -2488,8 +2488,8 @@ function animateFighter(f){
       aR=aim-.3+sway; eR=.3; aRy=.42; aRx=.04;
       if(!air){ aL=aim-.38+sway; eL=.38; aLy=-.62; aLx=0; } }
     else if(w.kind==='minigun'){                                                         // minigun: a la cadera, derecha atrás y la izquierda arriba en el asa
-      aR=aim-.95+sway; eR=.75; aRy=.25; aRx=.12;
-      if(!air){ aL=aim-.2+sway; eL=.55; aLy=-.45; aLx=-.05; } }
+      aR=.22+sway; eR=aim-aR+.02; aRy=.18; aRx=.1;                                     // colgada abajo de la barriga
+      if(!air){ aL=.5+sway; eL=aim-aL-.25; aLy=-.5; aLx=-.08; } }
     else {                                                                              // arma larga: culata al hombro y mano izquierda en el guardamanos
       aR=1.0+p*.35+sway; eR=aim-aR; aRy=.3; aRx=.1; if(!moving&&!air&&!(f.slide>0)){ lL=.22; lR=-.2; kL=-.3; kR=-.16; }
       if(!air){ aL=1.28+p*.6+sway; eL=aim-aL-.12; aLy=-.72; aLx=-.05; } }
@@ -4017,6 +4017,7 @@ function placeCam(cam,f,vm){
   if(wpm.kind==='scythe'){ const s=f.swing, d=f.swingDir||1, sw=Math.cos(Math.PI*(1-s))*Math.min(1,s*4);   // barrido de lado a lado, alternando
     rx=-s*.35; ry=Math.PI/2+d*sw*1.05; rz=window.SCY_RZ!=null?SCY_RZ:.95; rz+=d*sw*.35-s*.5; px+=d*sw*.18; py-=eq*.5; }
   else if(wpm.melee||wpm.util){ rx=-f.swing*1.3; ry=Math.PI/2+f.swing*.9; rz=.3+f.swing*.6; py-=eq*.5; }
+  if(wpm.kind==='minigun'){ py-=.1; px-=.05; }   // minigun colgada abajo, a la altura de la barriga
   vm.position.set(px,py,pz); vm.rotation.set(rx,ry,rz); vm.scale.setScalar((shortGun?.8:.6)-.08*ak);
   // cargador: sale, desaparece, entra uno nuevo
   const mg=vm.userData.mag;

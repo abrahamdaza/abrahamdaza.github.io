@@ -2492,7 +2492,7 @@ function animateFighter(f){
       if(!air){ aL=1.28+p*.6+sway; eL=aim-aL-.12; aLy=-.72; aLx=-.05; } }
     if(f.reloadT>0&&!w.melee&&!w.util&&!air&&w.reload>0){ const q=1-f.reloadT/w.reload;   // recarga: la mano izquierda baja al cargador, trae otro y lo mete
       aL=aim-.95+Math.sin(q*Math.PI*2)*.38; eL=.95-Math.sin(q*Math.PI)*.45; aLy=-.55; aLx=.05; } }
-  if(f.swing>0){ aR+=f.swing*.9; aRx+=f.swing*.5; }
+  if(f.swing>0){ if(WEAPONS[f.weapon]&&WEAPONS[f.weapon].kind==='scythe'){ const d=f.swingDir||1, sw=Math.cos(Math.PI*(1-f.swing))*Math.min(1,f.swing*4); aR+=f.swing*.5; aRx+=d*sw*.9; } else { aR+=f.swing*.9; aRx+=f.swing*.5; } }
   if(f.flinch>0){ const q=f.flinch; headZ+=q*.45; headY+=q*.2*(f.flinchS||1); aR-=q*.35; aL-=q*.25; kL-=q*.25; kR-=q*.25; }
   // emotes
   if(f.emote){
@@ -2565,12 +2565,12 @@ function buildGun(group, wi){
     else if(w.kind==='fists'){ add(new THREE.BoxGeometry(.16,.16,.16),0xf5c99b,.05,0,0); }
     else if(w.kind==='scythe'){   // guadaña: mango de madera curvo con dos agarraderas, collar de acero y hoja larga curva
       const wood=new THREE.MeshStandardMaterial({color:0x6b4423,map:GTEX.grain,roughness:.65});
-      const path=new THREE.CatmullRomCurve3([new THREE.Vector3(-.2,0,0),new THREE.Vector3(.25,.03,0),new THREE.Vector3(.65,.02,0),new THREE.Vector3(1.0,-.03,0)]);
+      const path=new THREE.LineCurve3(new THREE.Vector3(-.2,-.03,0),new THREE.Vector3(1.0,-.03,0));   // mango derecho
       const sn=new THREE.Mesh(new THREE.TubeGeometry(path,24,.024,10,false),wood); sn.castShadow=true; group.add(sn);
       // empuñadura forrada con tiras de cuero (sin los palitos)
       const leather=new THREE.MeshStandardMaterial({color:0x2b1a10,roughness:.9});
-      for(let i=0;i<7;i++){ const r=new THREE.Mesh(new THREE.TorusGeometry(.027,.007,6,14),leather); r.rotation.y=Math.PI/2; r.position.set(-.12+i*.035,.006,0); group.add(r); }
-      const cap=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),GM.dark); cap.position.set(-.2,0,0); group.add(cap);
+      for(let i=0;i<7;i++){ const r=new THREE.Mesh(new THREE.TorusGeometry(.027,.007,6,14),leather); r.rotation.y=Math.PI/2; r.position.set(-.12+i*.035,-.03,0); group.add(r); }
+      const cap=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),GM.dark); cap.position.set(-.2,-.03,0); group.add(cap);
       cyl(.034,.08,GM.steel,.98,-.03); const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,.09,8),GM.steel); bolt.rotation.x=Math.PI/2; bolt.position.set(.98,-.03,0); group.add(bolt);
       // hoja curva con filo brillante
       const sh=new THREE.Shape(); sh.moveTo(0,.01); sh.quadraticCurveTo(.45,.12,.9,-.22); sh.quadraticCurveTo(.55,-.03,0,-.1); sh.lineTo(0,.01);
@@ -2581,7 +2581,9 @@ function buildGun(group, wi){
       edge.geometry.translate(0,0,-.008); edge.rotation.copy(blade.rotation); edge.position.copy(blade.position); group.add(edge);
       const sp=new THREE.Shape(); sp.moveTo(0,.012); sp.quadraticCurveTo(.45,.122,.86,-.195); sp.quadraticCurveTo(.45,.1,0,-.012); sp.lineTo(0,.012);
       const spine=new THREE.Mesh(new THREE.ExtrudeGeometry(sp,{depth:.022,bevelEnabled:false}),new THREE.MeshStandardMaterial({color:0x4a4e57,metalness:.8,roughness:.45})); spine.geometry.translate(0,0,-.011); spine.rotation.copy(blade.rotation); spine.position.copy(blade.position); group.add(spine);
-      const tang=new THREE.Mesh(roundedBox(.06,.05,.05,.01),GM.dark); tang.position.set(1.0,-.03,0); group.add(tang); }
+      const tang=new THREE.Mesh(roundedBox(.06,.05,.05,.01),GM.dark); tang.position.set(1.0,-.03,0); group.add(tang);
+      for(const o of [blade,edge,spine]) o.scale.x=-1;   // la hoja apunta a la derecha
+    }
     else if(w.kind==='flash'){ const c=add(new THREE.CylinderGeometry(.08,.08,.24,10),0xdddddd,.08,0,0); c.rotation.z=Math.PI/2; }
     else if(w.kind==='saw'){ add(new THREE.BoxGeometry(.3,.22,.18),0xffb020,0,0,0); add(new THREE.BoxGeometry(.6,.12,.03),0x9aa0a8,.42,0,0); }
     else if(w.kind==='shield'){ add(new THREE.BoxGeometry(.06,.75,.55),0x5a7dff,.15,0,0); add(new THREE.BoxGeometry(.07,.12,.4),0xd0dcff,.16,.15,0); }
@@ -3523,7 +3525,7 @@ function explode(cx,cy,by,radius,maxDmg,friendly,ez=.8,wid=null){
   for(const o of [...WALLS]){ const d=Math.hypot(o.x+o.w/2-cx,o.y+o.h/2-cy); if(d<radius+10&&o.hp!=null){ o.hp-=60; if(o.hp<=0) setTimeout(()=>destroyPart(o,by),120); } }
 }
 // ---------- cuerpo a cuerpo ----------
-function meleeSwing(f){
+function meleeSwing(f){ f.swingDir=-(f.swingDir||-1);
   if(NET.inGame&&f===player) netSend({t:'melee',a:+f.angle.toFixed(3),w:f.weapon});
   const wp=WEAPONS[f.weapon]; f.swing=1; f.kick=1; wp.snd(f.isBot?vol3(f)*.7:1);
   let best=null, bd=1e9;
@@ -4007,7 +4009,9 @@ function placeCam(cam,f,vm){
   if(rel){ const tl=Math.sin(Math.min(1,pgs*1.15)*Math.PI); rx-=.5*tl; rz+=.22*tl; py-=.05*tl; px-=.03*tl; }
   if(eq>0){ py-=eq*eq*.55; rx+=eq*1.0; }
   if(ins>0){ const k=Math.sin(ins*Math.PI); ry-=1.15*k; rz+=.3*k*Math.sin(ins*Math.PI*2+1); px-=.1*k; py+=.06*k; pz+=.12*k; }
-  if(wpm.melee||wpm.util){ rx=-f.swing*1.3; ry=Math.PI/2+f.swing*.9; rz=.3+f.swing*.6; py-=eq*.5; }
+  if(wpm.kind==='scythe'){ const s=f.swing, d=f.swingDir||1, sw=Math.cos(Math.PI*(1-s))*Math.min(1,s*4);   // barrido de lado a lado, alternando
+    rx=-s*.35; ry=Math.PI/2+d*sw*1.05; rz=.3+d*sw*.35; px+=d*sw*.18; py-=eq*.5; }
+  else if(wpm.melee||wpm.util){ rx=-f.swing*1.3; ry=Math.PI/2+f.swing*.9; rz=.3+f.swing*.6; py-=eq*.5; }
   vm.position.set(px,py,pz); vm.rotation.set(rx,ry,rz); vm.scale.setScalar((shortGun?.8:.6)-.08*ak);
   // cargador: sale, desaparece, entra uno nuevo
   const mg=vm.userData.mag;

@@ -163,6 +163,7 @@
     <div class="row small">
       <button id="nameBtn" class="hidden">✏️ Elegir nombre del juego</button>
       <button id="helpBtn">❔ Controles</button>
+      <button id="langBtn"></button>
       <button id="installBtn" class="hidden" style="background:linear-gradient(90deg,#3ddc84,#2fa8ff)">📲 Instalar juego</button>
     </div>
     <div id="keysBox" class="hidden">
@@ -219,6 +220,17 @@
   <button id="netBack">Salir</button>
 </div>
 
+<div id="guide" class="screen hidden" style="z-index:9">
+  <h2>¡Bienvenido! Así se juega</h2>
+  <div style="display:grid;gap:10px;max-width:560px;width:100%;text-align:left;font-size:19px;font-weight:700">
+    <div style="background:rgba(10,12,24,.75);border-radius:14px;padding:12px 16px">🚶 <span>Camina con WASD (o el joystick)</span></div>
+    <div style="background:rgba(10,12,24,.75);border-radius:14px;padding:12px 16px">🟦 <span>Párate en un cuadro de color para empezar una partida</span></div>
+    <div style="background:rgba(10,12,24,.75);border-radius:14px;padding:12px 16px">🎯 <span>Elimina al equipo rival: gana el primero en llegar a 5 rondas</span></div>
+    <div style="background:rgba(10,12,24,.75);border-radius:14px;padding:12px 16px">🔑 <span>Gana llaves 🔑 y compra armas en la TIENDA</span></div>
+  </div>
+  <button class="go" id="guideOk">¡Entendido!</button>
+</div>
+
 <div id="nameScr" class="screen hidden" style="justify-content:flex-start;overflow-y:auto">
   <h2>✏️ Nombre del juego</h2>
   <p>Elige el nombre que saldrá en la portada.</p>
@@ -229,7 +241,7 @@
 <div id="armoryScr" class="screen hidden" style="justify-content:flex-start;overflow-y:auto">
   <h2>🛒 TIENDA</h2>
   <div style="font-size:20px;font-weight:800;color:#ffd84f" id="armKeys"></div>
-  <p style="font-size:14px">Todas las armas cuestan llaves 🔑 (solo los puños son gratis). Las que compres las eliges con la tecla <b>M</b>. Las ganas así: +1 por eliminación, +10 por ganar una partida, +3 por perderla y muchas más con las misiones. Tu equipo tiene 4 ranuras: principal (1), secundaria (2), cuerpo a cuerpo (3) y utilidad (4).</p>
+  <p style="font-size:14px">Todas las armas cuestan llaves 🔑 (solo los puños son gratis). Las que compres las eliges con la tecla <b>M</b>. Las ganas así: +1 por eliminación, +3 por ganar una partida, +1 por perderla y muchas más con las misiones. Tu equipo tiene 4 ranuras: principal (1), secundaria (2), cuerpo a cuerpo (3) y utilidad (4).</p>
   <div class="row" id="loadoutRow"></div>
   <div id="armGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;width:min(1100px,100%)"></div>
   <button id="armBack" class="go" style="margin:10px 0 20px">LISTO</button>
@@ -354,6 +366,202 @@
 
 </script>
 <script>
+// ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
+const I18N_EN = {
+// ---- portada y menús ----
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","Duelos de bloques en primera persona · 1 vs 1 · 2 vs 2 · 3 vs 3":"First-person block duels · 1v1 · 2v2 · 3v3",
+"▶ JUGAR":"▶ PLAY","🌐 EN LÍNEA":"🌐 ONLINE","🛒 TIENDA":"🛒 SHOP","📜 MISIONES":"📜 MISSIONS","👕 AVATAR":"👕 AVATAR","🎁 RULETA":"🎁 SPIN","📦 CAJAS":"📦 CRATES",
+"❔ Controles":"❔ Controls","📲 Instalar juego":"📲 Install game","✏️ Elegir nombre del juego":"✏️ Choose game name","✏️ Nombre del juego":"✏️ Game name",
+"Elige el nombre que saldrá en la portada.":"Choose the name shown on the cover.","LISTO":"DONE","CAJA DE ARENA":"SANDBOX","💥 ABRAHAM KABLOK! · Cargando…":"💥 ABRAHAM KABLOK! · Loading…",
+"No se pudo cargar el motor 3D. Revisa tu conexión a internet y recarga.":"Could not load the 3D engine. Check your internet connection and reload.",
+"Nivel":"Level","nivel":"level",
+// ---- controles ----
+"Ratón":"Mouse","Espacio":"Space","Shift":"Shift","Ctrl":"Ctrl","Enter":"Enter","Esc":"Esc","Shift der.":"Right Shift","Ctrl der.":"Right Ctrl","Retroceso":"Backspace",
+"moverse ·":"move ·","mirar y disparar ·":"look and shoot ·","saltar ·":"jump ·","deslizarse ·":"slide ·","impulso ·":"dash ·","recargar":"reload","ranuras ·":"slots ·","mis armas ·":"my weapons ·",
+"usar (en el lobby) ·":"use (in the lobby) ·","inspeccionar arma ·":"inspect weapon ·","lanzar utilidad rápido ·":"quick-throw utility ·","cámara 1ª/3ª persona ·":"1st/3rd person camera ·",
+"saludar ·":"wave ·","bailar ·":"dance ·","celebrar ·":"cheer ·","pausa":"pause","Amigo (pantalla derecha):":"Friend (right screen):","disparar (con ayuda de puntería) ·":"shoot (with aim assist) ·",
+"avanzar/retroceder ·":"forward/back ·","girar ·":"turn ·","moverse de lado":"strafe","rotar cámara":"rotate camera","señalar":"point","Señalar":"Point",
+"Clic izq: poner (mantén para pintar) · Clic der: borrar ·":"Left click: place (hold to paint) · Right click: erase ·","girar pieza / rampa ·":"rotate piece / ramp ·","deshacer · Rueda: zoom ·":"undo · Wheel: zoom ·",
+"Todas las armas cuestan llaves 🔑 (solo los puños son gratis). Las que compres las eliges con la tecla":"Every weapon costs keys 🔑 (only fists are free). Pick the ones you bought with the key",
+". Las ganas así: +1 por eliminación, +3 por ganar una partida, +1 por perderla y muchas más con las misiones. Tu equipo tiene 4 ranuras: principal (1), secundaria (2), cuerpo a cuerpo (3) y utilidad (4).":". Earn them: +1 per elimination, +3 for winning a match, +1 for losing, and more from missions. Your loadout has 4 slots: primary (1), secondary (2), melee (3) and utility (4).",
+// ---- lobby ----
+"LOBBY":"LOBBY","Párate en un cuadro para jugar · E usar · M mis armas · V cámara · G/B/H emotes":"Step on a pad to play · E use · M my weapons · V camera · G/B/H emotes",
+"TU EQUIPO":"YOUR LOADOUT","(vacío)":"(empty)","(vacío) · compra una":"(empty) · buy one","Vacío":"Empty","TIENDA":"SHOP","MISIONES":"MISSIONS","AVATAR":"AVATAR","armas con llaves":"weapons for keys","gana llaves":"earn keys",
+"2 vs 2 con amigo":"2v2 with a friend","pantalla dividida":"split screen","2 VS 2 AMIGO":"2 VS 2 FRIEND","1 VS 1":"1 VS 1","2 VS 2":"2 VS 2","3 VS 3":"3 VS 3",
+"Sal del cuadro para cancelar":"Step off the pad to cancel","El 2 vs 2 con amigo (pantalla dividida) es solo para computador":"2v2 with a friend (split screen) is computer only",
+"🎁 Tienes ${n} ruletas · Esc → menú para girar":"","EN VIVO":"LIVE","🎯 CAMPO DE TIRO":"🎯 SHOOTING RANGE","CRUZA LA PANTALLA ▶":"WALK THROUGH THE SCREEN ▶","▶ CRUZA LA PANTALLA ◀":"▶ WALK THROUGH THE SCREEN ◀",
+"🏠 VOLVER AL LOBBY":"🏠 BACK TO LOBBY","Pulsa V para verte en tercera persona":"Press V to see yourself in third person","Haz clic en la pantalla para controlar la cámara":"Click the screen to control the camera",
+"Cámara: primera persona (V)":"Camera: first person (V)","Cámara: tercera persona (V)":"Camera: third person (V)",
+// ---- mapas ----
+"🗺️ ELIGE EL MAPA":"🗺️ CHOOSE THE MAP","Se elige al azar en":"Random pick in","🎲 Al azar":"🎲 Random","Mapa:":"Map:",
+"Campo de Ajedrez":"Chess Field","Plaza Central":"Central Plaza","Arena Central":"Central Arena","Patio de Cajas":"Crate Yard","Fortalezas":"Fortresses","Laberinto":"Maze","Playa del Castillo":"Castle Beach",
+"Barrio":"Neighborhood","Castillo de Arena":"Sandcastle","Cementerio":"Graveyard","Fuerte de Nieve":"Snow Fort","Tu mapa":"Your map",
+"Ajedrez":"Chess","Arena":"Arena","Desierto":"Desert","Noche":"Night","Nieve":"Snow","Playa":"Beach",
+// ---- partida ----
+"primero a 5":"first to 5","TÚ":"YOU","ALIADO":"ALLY","RIVAL":"ENEMY","AMIGO":"FRIEND","JUGADOR 1":"PLAYER 1","¡10 SEGUNDOS!":"10 SECONDS!","¡CONGELADO!":"FROZEN!",
+"¡RONDA PARA TU EQUIPO!":"YOUR TEAM WINS THE ROUND!","RONDA PARA TU EQUIPO":"YOUR TEAM WINS THE ROUND","LOS RIVALES GANAN LA RONDA":"THE ENEMIES WIN THE ROUND","EMPATE":"DRAW",
+"⏱️ ¡TIEMPO! ":"⏱️ TIME! ","⏱️ ¡TIEMPO! EMPATE":"⏱️ TIME! DRAW","⏱️ ¡TIEMPO! RONDA PARA TU EQUIPO":"⏱️ TIME! YOUR TEAM WINS THE ROUND","⏱️ ¡TIEMPO! LOS RIVALES GANAN LA RONDA":"⏱️ TIME! THE ENEMIES WIN THE ROUND",
+"ELIMINADO · mirando a tu equipo":"ELIMINATED · spectating your team","TE ELIMINARON · tu aliado sigue":"YOU WERE ELIMINATED · your ally is still fighting",
+" ¡CABEZA!":" HEADSHOT!"," ¡POR LA ESPALDA!":" BACKSTAB!","+1 🔑 eliminación":"+1 🔑 elimination","recargando":"reloading","impulso ✓":"dash ✓","impulso…":"dash…",
+"Solo puedes cambiar de arma entre rondas (o en el lobby y la práctica)":"You can only change weapons between rounds (or in the lobby and practice)",
+"¡GANASTE!":"YOU WIN!","PERDISTE":"YOU LOST","REVANCHA":"REMATCH","Volver al lobby":"Back to lobby","Volver a la sala":"Back to the room","Editar mapa":"Edit map",
+"PAUSA":"PAUSE","CONTINUAR":"CONTINUE","Salir al lobby":"Leave to lobby","Salir":"Leave","Cerrar":"Close","VOLVER":"BACK","VOLVER AL LOBBY":"BACK TO LOBBY","Menú":"Menu",
+"🔒 No puedes salir en medio de una partida. ¡Termínala! Al final podrás volver al lobby o pedir revancha.":"🔒 You can't leave in the middle of a match. Finish it! Afterwards you can go back to the lobby or ask for a rematch.",
+"Llaves ganadas en esta partida: ":"Keys earned this match: ","+10 por ganar":"+3 for winning","+3 por jugar":"+1 for playing","+3 por ganar":"+3 for winning","+1 por jugar":"+1 for playing",", +1 por eliminación":", +1 per elimination",", y misiones":", and missions",
+"Tienes ":"You have "," para gastar en la Armería.":" to spend in the Shop.","Sigues en el nivel ":"You are still level ",". ¡Gana para subir!":". Win to level up!",
+"📦 ¡SORPRESA! Te regalaron una caja":"📦 SURPRISE! You got a crate","🎁 ¡SORPRESA! Te regalaron una ruleta":"🎁 SURPRISE! You got a spin",
+// ---- práctica ----
+"🎯 CAMPO DE TIRO":"🎯 SHOOTING RANGE","objetivos cerca y lejos":"near and far targets","Eliminados":"Eliminated","Placas":"Plates","Disparos":"Shots","Aciertos":"Hits","Precisión":"Accuracy","A la cabeza":"Headshots",
+"[T] Reiniciar estadísticas":"[T] Reset stats","[Esc] Pausa / salir":"[Esc] Pause / leave","Utilidades ilimitadas · no recibes daño":"Unlimited utilities · you take no damage",
+"Cruza la pantalla grande para volver al lobby":"Walk through the big screen to go back to the lobby","Estadísticas reiniciadas":"Stats reset","🔫 ESTANTE DE ARMAS":"🔫 WEAPON RACK","E = probar otra arma":"E = try another weapon",
+"ESTANTE DE ARMAS (probar cualquier arma)":"WEAPON RACK (try any weapon)","VOLVER AL LOBBY":"BACK TO LOBBY","MUÑECO":"DUMMY","Muñeco":"Dummy","Quietos":"Still","Saltando":"Jumping",
+// ---- tienda / armas ----
+"🎒 MIS ARMAS":"🎒 MY WEAPONS","Elige cualquiera de las armas que ya compraste. Para conseguir más, ve a la 🛒 TIENDA del lobby.":"Pick any weapon you already bought. To get more, go to the 🛒 SHOP in the lobby.",
+"Todavía no tienes armas de este tipo — cómpralas en la tienda":"You don't have weapons of this type yet — buy them in the shop","Principal ·":"Primary ·","Secundaria ·":"Secondary ·","Cuerpo a cuerpo ·":"Melee ·","Utilidad ·":"Utility ·",
+"Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility","Equipar":"Equip","Equipada":"Equipped","EQUIPADA":"EQUIPPED","Comprar":"Buy","COMPRAR":"BUY",
+"Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda: ":"Uses per round: ",
+"Puños":"Fists","Pistola":"Pistol","Subfusil":"SMG","Rifle de asalto":"Assault Rifle","Escopeta":"Shotgun","Francotirador":"Sniper","Ráfaga":"Burst Rifle","Revólver":"Revolver","Ballesta":"Crossbow","Escopeta corta":"Sawed-off",
+"Minigun":"Minigun","Lanzacohetes":"Rocket Launcher","Rayo láser":"Laser Gun","Lanzallamas":"Flamethrower","Lanzagranadas":"Grenade Launcher","Rifle de pintura":"Paintball Rifle","Pistola de bengalas":"Flare Gun","Pistolas dobles":"Dual Pistols",
+"Arco":"Bow","Honda":"Slingshot","Dagas":"Throwing Daggers","Cuchillo":"Knife","Katana":"Katana","Hacha de batalla":"Battle Axe","Guadaña":"Scythe","Motosierra":"Chainsaw","Granada":"Grenade","Humo":"Smoke","Cegadora":"Flashbang",
+"Mina":"Mine","Molotov":"Molotov","Bomba de hielo":"Ice Bomb","Escudo":"Shield","Botiquín":"Medkit",
+"Automático y confiable a toda distancia.":"Automatic and reliable at any range.","Clic derecho para apuntar con mira.":"Right click to aim down the scope.","Cohetes que explotan en área.":"Rockets with area explosions.",
+"Bloquea las balas que vienen de frente.":"Blocks bullets coming from the front.","Bolas de pintura que caen un poco.":"Paintballs with a slight drop.","Congela y frena a los enemigos cercanos.":"Freezes and slows nearby enemies.",
+"Dagas que atraviesan a varios enemigos.":"Daggers that pierce several enemies.","Daño continuo y corres mucho más rápido.":"Continuous damage and you run much faster.","Deja ciegos a los que la miran.":"Blinds anyone looking at it.",
+"Deja el suelo en llamas por 4 segundos.":"Sets the ground on fire for 4 seconds.","Devastadora de cerca.":"Devastating up close.","Dispara rapidísimo, ideal para moverse.":"Fires super fast, great on the move.",
+"Disparos instantáneos de energía.":"Instant energy shots.","Dos cartuchos que barren todo de cerca.":"Two shells that sweep everything up close.","Explota 1.6 s después de lanzarla.":"Explodes 1.6 s after throwing it.",
+"Explota cuando un enemigo la pisa.":"Explodes when an enemy steps on it.","Flechas con caída. Tiro a la cabeza = 90.":"Arrows with drop. Headshot = 90.","Golpe amplio; al golpear te impulsa hacia adelante.":"Wide swing; hitting pushes you forward.",
+"Golpes rápidos.":"Fast punches.","Granadas en arco que explotan al tocar algo.":"Arcing grenades that explode on impact.","Largo alcance para un arma blanca.":"Long reach for a melee weapon.","Las flechas atraviesan a los enemigos.":"Bolts pierce through enemies.",
+"Lenta, pero casi elimina de un golpe.":"Slow, but almost a one-hit kill.","Llamas de corto alcance que queman.":"Short-range burning flames.","Nube que tapa la vista por 5 segundos.":"A cloud that blocks vision for 5 seconds.",
+"Piedras con caída, recarga al instante.":"Stones with drop, reloads instantly.","Pocas balas, mucho daño.":"Few bullets, lots of damage.","Prende fuego al enemigo.":"Sets the enemy on fire.","Recupera 60 de vida al instante.":"Restores 60 health instantly.",
+"Rápida de sacar, buena de respaldo.":"Quick to draw, a good backup.","Rápido y letal por la espalda (doble daño).":"Fast and deadly from behind (double damage).","Tres balas por disparo, muy precisa.":"Three bullets per shot, very accurate.",
+"Una en cada mano, disparan rapidísimo.":"One in each hand, they fire super fast.","150 balas sin parar, pero te mueves lento.":"150 non-stop bullets, but you move slowly.",
+// ---- misiones ----
+"Gana tu primera partida":"Win your first match","Elimina 10 enemigos":"Eliminate 10 enemies","Rompe 5 cajas":"Break 5 crates","Haz explotar 3 barriles":"Blow up 3 barrels","Rompe 15 cajas":"Break 15 crates",
+"Elimina 3 enemigos con escopeta":"Eliminate 3 enemies with a shotgun","Elimina 3 enemigos con francotirador":"Eliminate 3 enemies with a sniper","Gana 10 rondas":"Win 10 rounds","Haz 2 eliminaciones en una sola ronda":"Get 2 eliminations in one round",
+"Gana 2 partidas":"Win 2 matches","Elimina 30 enemigos":"Eliminate 30 enemies","Gana 5 partidas":"Win 5 matches","Gana una partida con un amigo":"Win a match with a friend","Elimina 10 enemigos con armas desbloqueadas":"Eliminate 10 enemies with unlocked weapons",
+"Haz 5 tiros a la cabeza":"Land 5 headshots","Elimina 3 enemigos cuerpo a cuerpo":"Eliminate 3 enemies in melee","Elimina 2 enemigos con granada":"Eliminate 2 enemies with a grenade","Deslízate 20 veces":"Slide 20 times",
+"Gana un duelo 1 contra 1":"Win a 1v1 duel","Elimina 3 enemigos con fuego":"Eliminate 3 enemies with fire","Elimina 5 enemigos con armas secundarias":"Eliminate 5 enemies with secondary weapons","Congela a 5 enemigos":"Freeze 5 enemies",
+"Bloquea 30 balas con el escudo":"Block 30 bullets with the shield","Elimina a un enemigo con una mina":"Eliminate an enemy with a mine","Gana 3 duelos 1 contra 1":"Win 3 1v1 duels","Gana 25 rondas":"Win 25 rounds","Elimina 100 enemigos":"Eliminate 100 enemies",
+"Haz 25 tiros a la cabeza":"Land 25 headshots","Gana una partida sin perder ninguna ronda (5-0)":"Win a match without losing a round (5-0)","Usa 10 utilidades":"Use 10 utilities","Elimina 3 enemigos mientras estás en el aire":"Eliminate 3 enemies while in the air",
+"📜 MISIONES":"📜 MISSIONS","Completada":"Completed","COMPLETADA":"COMPLETED",
+// ---- avatar ----
+"Personaliza a tu personaje. Así se verá en las partidas y su cara aparecerá en el marcador.":"Customize your character. This is how you'll look in matches, and your face will show on the scoreboard.",
+"Piel":"Skin","Cara":"Face","Pelo":"Hair","Gorra":"Cap","Gorro":"Beanie","Audífonos":"Headphones","Pelo en punta":"Spiky hair","Pelo de chico":"Boy hair","Pelo de chica":"Girl hair","Nada":"None",
+"Camiseta":"Shirt","Sudadera":"Hoodie","Chaleco":"Vest","Lisa":"Plain","Rayas":"Stripes","Estrella":"Star","Mangas":"Sleeves","Cortas":"Short","Largas":"Long","Pantalón":"Pants","Zapatos":"Shoes","Accesorio":"Accessory",
+"Mochila":"Backpack","Bufanda":"Scarf","Cadena":"Chain","Corbata":"Tie","Color de camiseta":"Shirt color","Color de gorra / audífonos":"Cap / headphones color","Color de pelo":"Hair color",
+"Sonrisa":"Smile","Risa":"Grin","Lentes":"Shades","Decidido":"Determined","Feliz":"Happy","Guiño":"Wink","Pestañas":"Lashes","Bailar":"Dance","Saludar":"Wave","Celebrar":"Cheer","Caminar":"Walk","Quieto":"Idle","Saltar":"Jump","Chico":"Boy",
+// ---- ruleta y cajas ----
+"🎁 RULETA SORPRESA":"🎁 SURPRISE SPIN","GIRAR":"SPIN","🎁 Girar ruleta":"🎁 Spin","Las ruletas son un regalo sorpresa: a veces te dan una al terminar una partida, y a veces no.":"Spins are a surprise gift: sometimes you get one after a match, sometimes you don't.",
+"No tienes ruletas ahora. Juega partidas: ¡a veces te regalan una!":"You have no spins right now. Play matches: sometimes you get one!","📦 CAJA SORPRESA":"📦 SURPRISE CRATE","ABRIR":"OPEN","📦 Abrir caja":"📦 Open crate",
+"Las cajas son un regalo sorpresa: a veces te dan una al terminar una partida. Adentro puede venir un arma normal.":"Crates are a surprise gift: sometimes you get one after a match. A regular weapon may be inside.",
+"No tienes cajas ahora. Juega partidas: ¡a veces te regalan una!":"You have no crates right now. Play matches: sometimes you get one!",
+// ---- en línea ----
+"🌐 JUGAR EN LÍNEA":"🌐 PLAY ONLINE","Tu nombre:":"Your name:","➕ CREAR SALA":"➕ CREATE ROOM","UNIRSE":"JOIN","CÓDIGO":"CODE","Código de la sala (mándaselo a tus amigos):":"Room code (send it to your friends):",
+"🔵 EQUIPO AZUL":"🔵 BLUE TEAM","🔴 EQUIPO ROJO":"🔴 RED TEAM","▶ EMPEZAR":"▶ START","Esperando a que el que creó la sala empiece la partida…":"Waiting for the room owner to start the match…",
+"El que creó la sala puede tocar a un jugador para cambiarlo de equipo. Máximo 6 jugadores.":"The room owner can tap a player to switch their team. Up to 6 players.",
+"Creando sala…":"Creating room…","¡Sala lista! Comparte el código.":"Room ready! Share the code.","¡Conectado!":"Connected!","Conectando a la sala ":"Connecting to room ","Escribe el código que te mandaron":"Type the code you were sent",
+"La sala está llena (máximo 6).":"The room is full (max 6).","Esa sala ya está jugando. Espera a que termine.":"That room is already playing. Wait for it to finish.","Se cerró la sala.":"The room was closed.",
+"Necesitas al menos un amigo en la sala":"You need at least one friend in the room","Pon al menos un jugador en cada equipo":"Put at least one player on each team","Error de conexión: ":"Connection error: ",
+"En esta página no se puede jugar en línea. Ábrelo desde tu página de GitHub o el programa del escritorio.":"Online play isn't available on this page.","No existe una sala con el código ":"There is no room with the code ","No se encontró la sala ":"Room not found: ",". Revisa el código.":". Check the code.",
+" entró a la sala":" joined the room"," salió de la partida":" left the match"," no quiso revancha":" didn't want a rematch",". Vuelven a la sala.":". Back to the room.","Tu rival se fue":"Your opponent left","No hubo revancha":"No rematch",
+"Se acabó el tiempo para la revancha":"Time ran out for the rematch","¡Revancha! Todos dijeron que sí":"Rematch! Everyone said yes","🔁 SÍ, REVANCHA":"🔁 YES, REMATCH","No, gracias":"No, thanks",
+"Enter = escribir · Y = micrófono":"Enter = type · Y = microphone","Escribe y pulsa Enter…":"Type and press Enter…","🎤 HABLAR":"🎤 TALK","🎤 MICRÓFONO ENCENDIDO":"🎤 MIC ON","Apagaste tu micrófono":"You turned off your mic",
+"Tu micrófono está encendido: tus amigos te escuchan":"Your mic is on: your friends can hear you","No se pudo usar el micrófono. Revisa que le diste permiso al navegador.":"Couldn't use the microphone. Check that you allowed it in the browser.",
+"Toca la pantalla para escuchar a tus amigos":"Tap the screen to hear your friends","El chat de voz es para el modo en línea":"Voice chat is for online mode","El chat es para el modo en línea":"Chat is for online mode",
+" apagó el micrófono":" turned off the mic"," encendió el micrófono 🎤":" turned on the mic 🎤","Alguien":"Someone","Jugador":"Player",
+"🔗 Copiar enlace de invitación":"🔗 Copy invite link","✅ Enlace copiado: mándaselo a tus amigos":"✅ Link copied: send it to your friends","📺 Ver anuncio: +2 🔑":"📺 Watch an ad: +2 🔑","✅ ¡+2 🔑!":"✅ +2 🔑!","No hay anuncio ahora":"No ad available right now",
+// ---- celular ----
+"Este juego se ve mejor con el celular acostado":"This game looks best in landscape","🔄 PONER HORIZONTAL":"🔄 ROTATE TO LANDSCAPE","Jugar así":"Play like this","Si no gira, revisa que la rotación automática de tu celular esté activada.":"If it doesn't rotate, check that auto-rotate is on.",
+"Gira tu celular o tablet":"Rotate your phone or tablet","para jugar acostado":"to play in landscape",
+// ---- letreros 3D ----
+"⚠ PELIGRO":"⚠ DANGER","MISIONES":"MISSIONS","objetivos cerca y lejos":"near and far targets","¡Prueba de reflejos! 30 segundos":"Reflex test! 30 seconds","DIFICULTAD":"DIFFICULTY","NORMAL":"NORMAL",
+"🎯 PRÁCTICA":"🎯 PRACTICE","PRÁCTICA":"PRACTICE",
+// ---- guía para empezar ----
+"¡Bienvenido! Así se juega":"Welcome! Here's how to play","Camina con WASD (o el joystick)":"Walk with WASD (or the joystick)","Párate en un cuadro de color para empezar una partida":"Step on a colored pad to start a match",
+"Elimina al equipo rival: gana el primero en llegar a 5 rondas":"Eliminate the enemy team: first to 5 rounds wins","Gana llaves 🔑 y compra armas en la TIENDA":"Earn keys 🔑 and buy weapons in the SHOP",
+"Clic o 🔥 = disparar · Clic derecho o 🎯 = apuntar":"Click or 🔥 = shoot · Right click or 🎯 = aim","¡Elimina al equipo ROJO!":"Eliminate the RED team!","¡Entendido!":"Got it!",
+"⬆ Párate en un cuadro de color para empezar una partida":"⬆ Step on a colored pad to start a match","🔥 = disparar · 🎯 = apuntar":"🔥 = shoot · 🎯 = aim","🌐 Español":"🌐 Español","🌐 English":"🌐 English",
+};
+// frases con números o nombres
+const I18N_RX = [
+  [/^Desbloquear · (\d+) 🔑$/, m=>`Unlock · ${m[1]} 🔑`],
+  [/^Cargador (\d+)$/, m=>`Magazine ${m[1]}`],
+  [/^Misiones completadas \(\+(\d+) 🔑\):$/, m=>`Missions completed (+${m[1]} 🔑):`],
+  [/^Ronda (\d+) · (.+)$/, m=>`Round ${m[1]} · ${T(m[2])}`],
+  [/^ALIADO (\d+)$/, m=>`ALLY ${m[1]}`],[/^ROJO (\d+)$/, m=>`RED ${m[1]}`],[/^AZUL (\d+)$/, m=>`BLUE ${m[1]}`],
+  [/^Error de conexión: (.+)$/, m=>`Connection error: ${m[1]}`],
+  [/^Muñecos: (.+)$/, m=>`Dummies: ${T(m[1])}`],
+  [/^⭐ ¡SUBISTE AL NIVEL (\d+)!$/, m=>`⭐ YOU REACHED LEVEL ${m[1]}!`],
+  [/^\((\+\d+) por (ganar|jugar)(, \+1 por eliminación)?(, y misiones)?\)$/, m=>`(${m[1]} for ${m[2]==='ganar'?'winning':'playing'}${m[3]?', +1 per elimination':''}${m[4]?', and missions':''})`],
+  [/^Tienes (\d+) cajas? para abrir$/, m=>`You have ${m[1]} crate${m[1]==='1'?'':'s'} to open`],
+  [/^Tienes (\d+) ruletas? para girar$/, m=>`You have ${m[1]} spin${m[1]==='1'?'':'s'}`],
+  [/^🎁 Tienes (\d+) ruletas? · Esc → menú para girar$/, m=>`🎁 You have ${m[1]} spin${m[1]==='1'?'':'s'} · Esc → menu to spin`],
+  [/^Tienes (\d+) 🔑$/, m=>`You have ${m[1]} 🔑`],
+  [/^⭐ Nivel (\d+)(.*)$/, m=>`⭐ Level ${m[1]}${m[2]}`],
+  [/^(.+) eliminó a (.+)$/, m=>`${m[1]} eliminated ${m[2]}`],
+  [/^(.+) ELIMINADO$/, m=>`${m[1]} ELIMINATED`],
+  [/^¡Misión completada! (.+?)  \+(\d+) 🔑$/, m=>`Mission complete! ${T(m[1])}  +${m[2]} 🔑`],
+  [/^¡Ganaste (\d+) 🔑!$/, m=>`You won ${m[1]} 🔑!`],
+  [/^Esta vez no vino arma: ¡(\d+) 🔑!$/, m=>`No weapon this time: ${m[1]} 🔑!`],
+  [/^¡Te salió un arma: (.+)!$/, m=>`You got a weapon: ${T(m[1])}!`],
+  [/^Ya tienes esas armas: ¡(\d+) 🔑!$/, m=>`You already have those weapons: ${m[1]} 🔑!`],
+  [/^¿Revancha\? (\d+)\/(\d+) dijeron que sí · (\d+) s$/, m=>`Rematch? ${m[1]}/${m[2]} said yes · ${m[3]} s`],
+  [/^Marcador final: (.+)$/, m=>`Final score: ${m[1]}`],
+  [/^Probando: (.+?)( \(cuesta (\d+) 🔑 en la tienda\))?$/, m=>`Trying: ${T(m[1])}${m[2]?` (costs ${m[3]} 🔑 in the shop)`:''}`],
+  [/^Pulsa E: (.+)$/, m=>`Press E: ${T(m[1])}`],
+  [/^Pulsa E para (.+)$/, m=>`Press E to ${T(m[1])}`],
+  [/^\[N\] Muñecos: (.+) · \[M\] Mis armas$/, m=>`[N] Dummies: ${T(m[1])} · [M] My weapons`],
+  [/^Usos por ronda: (\d+)$/, m=>`Uses per round: ${m[1]}`],
+  [/^(\d+) · (.+)$/, m=>`${m[1]} · ${T(m[2])}`],
+  [/^Conectando a la sala (.+)…$/, m=>`Connecting to room ${m[1]}…`],
+  [/^No se encontró la sala (.+)\. Revisa el código\.$/, m=>`Room ${m[1]} not found. Check the code.`],
+  [/^No existe una sala con el código (.+)\.$/, m=>`There is no room with the code ${m[1]}.`],
+  [/^(.+) entró a la sala$/, m=>`${m[1]} joined the room`],
+  [/^(.+) salió de la partida$/, m=>`${m[1]} left the match`],
+  [/^(.+) no quiso revancha\. Vuelven a la sala\.$/, m=>`${m[1]} didn't want a rematch. Back to the room.`],
+  [/^(.+) no quiso revancha$/, m=>`${m[1]} didn't want a rematch`],
+  [/^(.+) apagó el micrófono$/, m=>`${m[1]} turned off the mic`],
+  [/^(.+) encendió el micrófono 🎤$/, m=>`${m[1]} turned on the mic 🎤`],
+  [/^🚪 (.+)$/, m=>`🚪 ${T(m[1])}`],
+  [/^(.+) · nivel (\d+)(.*)$/, m=>`${m[1]} · level ${m[2]}${m[3]}`],
+  [/^Se quitó el Botiquín del juego: te devolvimos (\d+) 🔑$/, m=>`The Medkit was removed: we refunded ${m[1]} 🔑`],
+  [/^\+(\d+) 🔑 (.+)$/, m=>`+${m[1]} 🔑 ${T(m[2])}`],
+  [/^(.+) \((.+)\)$/, m=>{ const a=T(m[1]), b=T(m[2]); return (a!==m[1]||b!==m[2])?`${a} (${b})`:null; }],
+];
+const LANG = (()=>{ try{ const s=localStorage.getItem('kablok_lang'); if(s) return s; }catch(e){}
+  if(window.DEFAULT_LANG) return window.DEFAULT_LANG; return /^es/i.test(navigator.language||'')?'es':'en'; })();
+const _tCache = new Map();
+function T(s){
+  if(LANG!=='en'||typeof s!=='string'||!s) return s;
+  if(_tCache.has(s)) return _tCache.get(s);
+  let out=null;
+  if(I18N_EN[s]!=null&&I18N_EN[s]!=='') out=I18N_EN[s];
+  if(out==null){ const tr=s.trim(); if(tr!==s&&I18N_EN[tr]){ out=s.replace(tr,I18N_EN[tr]); } }
+  if(out==null){ const core=s.trim(), pre=s.slice(0,s.indexOf(core)), post=s.slice(s.indexOf(core)+core.length); for(const [rx,fn] of I18N_RX){ const m=core.match(rx); if(m){ const r=fn(m); if(r!=null){ out=pre+r+post; break; } } } }
+  if(out==null&&s.includes(' · ')){ const parts=s.split(' · '); const tp=parts.map(p=>T(p)); if(tp.some((p,i)=>p!==parts[i])) out=tp.join(' · '); }
+  if(out==null){ const m=s.match(/^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}]*)$/u); if(m&&m[2]&&m[2]!==s&&I18N_EN[m[2]]) out=m[1]+I18N_EN[m[2]]+m[3]; }
+  if(out==null){ const m=s.match(/^([^\p{L}\p{N}]+)(.+)$/u); if(m){ const r=T(m[2]); if(r!==m[2]) out=m[1]+r; } }
+  if(out==null) out=s;
+  if(_tCache.size<5000) _tCache.set(s,out); return out;
+}
+if(LANG==='en'){
+  // textos dibujados en el lienzo (marcador, letreros, avisos)
+  const P=CanvasRenderingContext2D.prototype, f=P.fillText, st=P.strokeText, ms=P.measureText;
+  P.fillText=function(t,...a){ return f.call(this,T(String(t)),...a); };
+  P.strokeText=function(t,...a){ return st.call(this,T(String(t)),...a); };
+  P.measureText=function(t){ return ms.call(this,T(String(t))); };
+  // textos de las pantallas (HTML)
+  const doNode=n=>{ if(n.nodeType===3){ const v=n.nodeValue; if(!v||!v.trim()||n.__en===v) return; const r=T(v); if(r!==v){ n.__en=r; n.nodeValue=r; } else n.__en=v; }
+    else if(n.nodeType===1){ if(n.tagName==='SCRIPT'||n.tagName==='STYLE') return;
+      if(n.placeholder){ const r=T(n.placeholder); if(r!==n.placeholder) n.placeholder=r; } if(n.title){ const r=T(n.title); if(r!==n.title) n.title=r; }
+      for(const c of n.childNodes) doNode(c); } };
+  const start=()=>{ doNode(document.body); new MutationObserver(ms=>{ for(const m of ms){ if(m.type==='characterData') doNode(m.target); else m.addedNodes.forEach(doNode); } })
+    .observe(document.body,{subtree:true,childList:true,characterData:true}); document.documentElement.lang='en'; };
+  if(document.body) start(); else addEventListener('DOMContentLoaded',start);
+}
+function setLang(l){ try{ localStorage.setItem('kablok_lang',l); }catch(e){} location.reload(); }
+
+
 if(!window.THREE){ document.getElementById('loading').textContent='No se pudo cargar el motor 3D. Revisa tu conexión a internet y recarga.'; throw new Error('no three'); }
 document.getElementById('loading').remove();
 
@@ -1674,7 +1882,7 @@ const DIFF=[
 const keys={}, codes={}, mouse={x:0,y:0,down:false,right:false,edBtn:null};
 let player=null, fighters=[], throws=[], bullets=[], particles=[], texts=[], feed=[], score={p:0,b:0};
 // ================== CONTROLES TÁCTILES (celular y tablet) ==================
-const TOUCH=(()=>{ try{ return matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches && (navigator.maxTouchPoints>0||'ontouchstart' in window); }catch(e){ return false; } })();
+let TOUCH=(()=>{ try{ return matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches && (navigator.maxTouchPoints>0||'ontouchstart' in window); }catch(e){ return false; } })();
 const TJ={fw:0,st:0};
 let state='menu', countdown=0, roundMsg='', roundMsgT=0, last=performance.now(), locked=false, hadLock=false, fromEditor=false;
 
@@ -1726,7 +1934,7 @@ function startRound(){
   countdown=3; state='countdown'; roundTime=0; suddenShown=false;
 }
 let matchLevels={};
-function startMatch(){ matchLevels={}; setWorld(1200,750); applyTheme(fromEditor?'default':arenaTheme); score={p:0,b:0}; player=null; p2=null; feed=[]; matchDone=[]; matchKeys=0; startRound(); }
+function startMatch(){ profile.stats.matches=(profile.stats.matches||0)+1; saveProfile(); matchLevels={}; setWorld(1200,750); applyTheme(fromEditor?'default':arenaTheme); score={p:0,b:0}; player=null; p2=null; feed=[]; matchDone=[]; matchKeys=0; startRound(); }
 
 // ================== Geometría 2D ==================
 function circleRect(cx,cy,r,w){ const nx=Math.max(w.x,Math.min(cx,w.x+w.w)), ny=Math.max(w.y,Math.min(cy,w.y+w.h)); const dx=cx-nx, dy=cy-ny; return dx*dx+dy*dy<r*r; }
@@ -2291,7 +2499,7 @@ function endMatch(){
   let html=`Marcador final: ${score.p} - ${score.b}`;
   if(matchDone.length){ const k=matchDone.reduce((a,m)=>a+m.reward,0);
     html+=`<br><br><b style="color:#ffd84f">Misiones completadas (+${k} 🔑):</b><br>`+matchDone.map(m=>'✓ '+m.txt).join('<br>'); }
-  html+=`<br><br>Llaves ganadas en esta partida: <b style="color:#ffd84f">+${matchKeys} 🔑</b> (${win?'+10 por ganar':'+3 por jugar'}, +1 por eliminación${matchDone.length?', y misiones':''})`;
+  html+=`<br><br>Llaves ganadas en esta partida: <b style="color:#ffd84f">+${matchKeys} 🔑</b> (${win?'+3 por ganar':'+1 por jugar'}, +1 por eliminación${matchDone.length?', y misiones':''})`;
   html+= win ? `<br><br><b style="font-size:22px;color:${levelColor(profile.level)}">⭐ ¡SUBISTE AL NIVEL ${profile.level}!</b>` : `<br><br>Sigues en el nivel <b style="color:${levelColor(profile.level)}">${profile.level}</b>. ¡Gana para subir!`;
   html+=`<br><br>Tienes <b style="color:#ffd84f">${profile.keys} 🔑</b> para gastar en la Armería.`;
   if(maybeGiftSpin(win)) html+=`<br><br><b style="font-size:22px;color:#ff7ab8">🎁 ¡SORPRESA! Te regalaron una ruleta</b>`;
@@ -2555,6 +2763,10 @@ function drawGlobalHUD(){
   hx.textAlign='center'; hx.font='800 36px Rubik';
   hx.fillStyle='#4fd1ff'; hx.fillText(score.p,cx-34,52); hx.fillStyle='#ff6b7f'; hx.fillText(score.b,cx+34,52);
   hx.fillStyle='rgba(255,255,255,.75)'; hx.font='800 18px Rubik'; hx.fillText('–',cx,48);
+  if((profile.stats.matches||0)<=2&&(state==='countdown'||roundTime<6)&&score.p+score.b===0){ hx.textAlign='center';
+    const a='¡Elimina al equipo ROJO!', b=TOUCH?'🔥 = disparar · 🎯 = apuntar':'Clic o 🔥 = disparar · Clic derecho o 🎯 = apuntar';
+    hx.font='900 30px Rubik'; hx.lineWidth=6; hx.strokeStyle='rgba(10,12,24,.85)'; hx.strokeText(a,cx,innerHeight*.3); hx.fillStyle='#ff6b7f'; hx.fillText(a,cx,innerHeight*.3);
+    hx.font='800 18px Rubik'; hx.strokeText(b,cx,innerHeight*.3+32); hx.fillStyle='#fff'; hx.fillText(b,cx,innerHeight*.3+32); }
   { const left=Math.max(0,ROUND_MAX-(state==='countdown'?0:roundTime)), m=Math.floor(left/60), sec=Math.ceil(left%60)===60?0:Math.ceil(left)%60, low=left<=10&&state==='play';
     const txt=m+':'+String(Math.ceil(left)-m*60>=60?0:Math.ceil(left)-m*60).padStart(2,'0');
     hx.fillStyle=low?'rgba(200,30,40,.85)':'rgba(10,12,24,.6)'; hx.beginPath(); hx.roundRect?hx.roundRect(cx-34,70,68,26,8):hx.rect(cx-34,70,68,26); hx.fill();
@@ -2835,8 +3047,10 @@ function goLobby(){
   loadMap(LOBBY_MAP); setArenaVisible(false); inLobby=true; uiOpen=false;
   if(profile.refund){ toasts.push({txt:'Se quitó el Botiquín del juego: te devolvimos '+MEDKIT.cost+' 🔑',life:5}); profile.refund=false; saveProfile(); }
   p2=null; player=makeFighter({x:600,y:510},'#2fa8ff',false,0,'TÚ',myLook(),{...profile.loadout}); player.angle=-Math.PI/2; fighters=[player];
-  state='lobby'; padT=0; curPad=null; requestLock();
+  state='lobby'; padT=0; curPad=null;
+  if(!profile.guideSeen){ uiOpen=true; releaseLock(); $('guide').classList.remove('hidden'); } else requestLock();
 }
+function closeGuide(){ $('guide').classList.add('hidden'); profile.guideSeen=true; saveProfile(); uiOpen=false; requestLock(); }
 function nearKiosk(){ let best=null, bd=110; for(const k of KIOSKS){ const d=Math.hypot(player.x-k.x,player.y-k.y); if(d<bd){bd=d;best=k;} } return best; }
 function lobbyInteract(){
   const k=nearKiosk(); if(!k) return;
@@ -2952,7 +3166,7 @@ function drawMissionPanel(y){ const ms=activeMissions(); if(!ms.length) return; 
   hx.textAlign='left'; hx.font='800 13px Rubik'; hx.fillStyle='#ffd84f'; hx.fillText('📜 MISIONES',x+12,y+20);
   ms.forEach((m,i)=>{ const yy=y+30+i*rh, have=Math.min(m.goal,profile.stats[m.stat]||0), col=['#7fd4ff','#3ddc84','#ffb020'][m.reward-1];
     hx.fillStyle=col; hx.font='900 '+(sm?12:13)+'px Rubik'; hx.fillText('+'+m.reward+' 🔑',x+10,yy+15);
-    hx.fillStyle='#fff'; hx.font='600 '+(sm?11:12)+'px Rubik'; let t=m.txt; const maxW=w-70; while(hx.measureText(t).width>maxW&&t.length>4) t=t.slice(0,-2); if(t!==m.txt) t=t.trimEnd()+'…'; hx.fillText(t,x+58,yy+15);
+    hx.fillStyle='#fff'; hx.font='600 '+(sm?11:12)+'px Rubik'; let t=T(m.txt); const maxW=w-70; while(hx.measureText(t).width>maxW&&t.length>4) t=t.slice(0,-2); if(t!==m.txt) t=t.trimEnd()+'…'; hx.fillText(t,x+58,yy+15);
     hx.fillStyle='rgba(255,255,255,.15)'; hx.fillRect(x+10,yy+22,w-20,6); hx.fillStyle=col; hx.fillRect(x+10,yy+22,(w-20)*have/m.goal,6);
     hx.textAlign='right'; hx.font='700 10px Rubik'; hx.fillStyle='rgba(255,255,255,.75)'; hx.fillText(have+'/'+m.goal,x+w-10,yy+38); hx.textAlign='left'; }); }
 function drawLobbyHUD(){
@@ -2965,6 +3179,10 @@ function drawLobbyHUD(){
   hx.font='800 16px Rubik'; hx.fillStyle=levelColor(profile.level); hx.fillText(`⭐ Nivel ${profile.level}`,innerWidth-20,78);
   hx.font='500 13px Rubik'; hx.fillStyle='#fff'; if(profile.spins>0){ hx.fillStyle='#ff7ab8'; hx.fillText(`🎁 Tienes ${profile.spins} ruleta${profile.spins>1?'s':''} · Esc → menú para girar`,innerWidth-20,96); hx.fillStyle='#fff'; }
   drawMissionPanel(110);
+  if(!(profile.stats.matches>0)&&!uiOpen){ const tb=Math.sin(performance.now()/250)*6; hx.textAlign='center'; hx.font='800 22px Rubik';
+    const msg='⬆ Párate en un cuadro de color para empezar una partida', w=hx.measureText(msg).width+40;
+    hx.fillStyle='rgba(255,216,79,.92)'; hx.beginPath(); hx.roundRect?hx.roundRect(cx-w/2,innerHeight-170+tb,w,44,12):hx.rect(cx-w/2,innerHeight-170+tb,w,44); hx.fill();
+    hx.fillStyle='#141831'; hx.fillText(msg,cx,innerHeight-140+tb); }
   // equipo actual
   hx.textAlign='left'; hx.font='800 13px Rubik'; hx.fillStyle='#fff'; hx.fillText('TU EQUIPO',18,30);
   SLOTS.forEach((sl,i)=>{ const w=WEAPONS[profile.loadout[sl]]||{css:'#888',name:'(vacío)'}; hx.font='500 13px Rubik'; hx.fillStyle=w.css; hx.fillText(`${i+1} · ${w.name}`,18,50+i*18); });
@@ -3200,13 +3418,13 @@ function pauseGame(){ if(inMatch()) return; pausedFrom=state; state='pause'; mou
   document.getElementById('pauseNote').classList.toggle('hidden',!m);
   document.getElementById('pause').classList.remove('hidden'); }
 // aviso si intentan cerrar la página en plena partida
-addEventListener('beforeunload',e=>{ if(inMatch()||(state==='pause'&&inMatch(pausedFrom))){ e.preventDefault(); e.returnValue=''; return ''; } });
+addEventListener('beforeunload',e=>{ if(window.NO_LEAVE_PROMPT) return; if(inMatch()||(state==='pause'&&inMatch(pausedFrom))){ e.preventDefault(); e.returnValue=''; return ''; } });
 document.getElementById('resume').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); state=pausedFrom||'play'; requestLock(); };
 document.getElementById('pauseEditor').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); openEditor(); };
 document.getElementById('pauseMenu').onclick=()=>{ document.getElementById('pause').classList.add('hidden'); if(pausedFrom==='lobby') goMenu(); else goLobby(); };
 // ---- interfaz táctil ----
 function initTouch(){
-  if(!TOUCH) return;
+  if(!TOUCH||window.__touchInit) return; window.__touchInit=true;
   document.body.classList.add('isTouch');
   $('rotSkip').onclick=()=>document.body.classList.add('noRotate');
   $('rotLock').onclick=async()=>{ try{ const el=document.documentElement; if(!document.fullscreenElement&&el.requestFullscreen) await el.requestFullscreen(); }catch(e){}
@@ -3279,7 +3497,7 @@ function netCanWork(){ if(typeof Peer==='undefined'||!window.RTCPeerConnection){
 function netMe(){ return {id:NET.myId,name:($('netName').value.trim()||'Jugador').slice(0,12),look:myLook(),level:profile.level||1}; }
 function netReset(){ voiceOff(true); try{ if(NET.peer) NET.peer.destroy(); }catch(e){} Object.assign(NET,{on:false,host:false,inGame:false,peer:null,conns:{},hostConn:null,myId:null,code:'',players:[]}); }
 function openNet(){ $('menu').classList.add('hidden'); $('netScr').classList.remove('hidden'); $('netStart').classList.remove('hidden'); $('netRoom').classList.add('hidden');
-  $('netName').value=profile.netName||('Jugador'+Math.floor(Math.random()*90+10)); netStatus(''); netCanWork(); }
+  $('netName').value=profile.netName||(T('Jugador')+Math.floor(Math.random()*90+10)); netStatus(''); netCanWork(); }
 function netRestoreOver(){ $('again').classList.remove('hidden'); $('toMenu').classList.remove('hidden'); $('toMenu').textContent='Volver al lobby'; $('rematchBox').classList.add('hidden'); clearInterval(RM.timer); }
 function netLeave(){ netRestoreOver(); netReset(); $('netScr').classList.add('hidden'); if(state!=='menu') goMenu(); $('menu').classList.remove('hidden'); }
 function netBackToRoom(){ netRestoreOver(); NET.inGame=false; for(const f of fighters) scene.remove(f.mesh); fighters=[]; player=null; state='menu'; releaseLock();
@@ -3489,7 +3707,9 @@ function applyGameName(){ const n='ABRAHAM KABLOK!';   // nombre oficial del jue
 function openNames(){ $('menu').classList.add('hidden'); $('nameScr').classList.remove('hidden');
   $('nameGrid').innerHTML=''; GAME_NAMES.forEach((n,i)=>{ const b=document.createElement('button'); b.textContent=(GAME_NAMES_HOT.includes(n)?'🔥 ':'')+n; if((profile.gameName||GAME_NAMES[0])===n) b.classList.add('sel');
     b.onclick=()=>{ profile.gameName=n; saveProfile(); applyGameName(); [...$('nameGrid').children].forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); beep(880,.08,'sine',.05); }; $('nameGrid').appendChild(b); }); }
-function initCover(){ $('nameBtn').onclick=openNames; $('nameBack').onclick=()=>{ $('nameScr').classList.add('hidden'); $('menu').classList.remove('hidden'); }; $('helpBtn').onclick=()=>$('keysBox').classList.toggle('hidden'); }
+function initGuide(){ $('guideOk').onclick=closeGuide; }
+function initLangBtn(){ initGuide(); const b=$('langBtn'); b.textContent=LANG==='en'?'🌐 Español':'🌐 English'; b.onclick=()=>setLang(LANG==='en'?'es':'en'); }
+function initCover(){ initLangBtn(); $('nameBtn').onclick=openNames; $('nameBack').onclick=()=>{ $('nameScr').classList.add('hidden'); $('menu').classList.remove('hidden'); }; $('helpBtn').onclick=()=>$('keysBox').classList.toggle('hidden'); }
 // los personajes de la portada: tu avatar en el centro con tu arma y dos amigos haciendo emotes
 const coverGroup=new THREE.Group(); scene.add(coverGroup); let coverFigs=[];
 const COVER_POS={x:300,y:375};

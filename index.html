@@ -215,7 +215,9 @@
       <div style="background:rgba(47,168,255,.18);border:2px solid #2fa8ff;border-radius:14px;padding:10px"><b style="color:#7fd4ff">🔵 EQUIPO AZUL</b><div id="netTeam0"></div></div>
       <div style="background:rgba(255,79,107,.18);border:2px solid #ff4f6b;border-radius:14px;padding:10px"><b style="color:#ff9fb0">🔴 EQUIPO ROJO</b><div id="netTeam1"></div></div>
     </div>
-    <div id="netHostBox" class="row" style="align-items:center"><span>Mapa:</span><select id="netMap" style="font:inherit;font-size:16px;padding:8px;border-radius:10px"></select><button class="go" id="netGo">▶ EMPEZAR</button></div>
+    <div id="netVoteRow" class="row" style="align-items:center"><span>🗺️ Vota el mapa:</span><select id="netVote" style="font:inherit;font-size:16px;padding:8px;border-radius:10px"></select></div>
+    <div id="netVotes" style="font-size:15px;font-weight:700;color:#ffd84f;min-height:20px"></div>
+    <div id="netHostBox" class="row" style="align-items:center"><select id="netMap" style="display:none"></select><button class="go" id="netGo">▶ EMPEZAR</button></div>
     <div id="netWait" style="opacity:.85">Esperando a que el que creó la sala empiece la partida…</div>
     <p style="font-size:14px">El que creó la sala puede tocar a un jugador para cambiarlo de equipo. Máximo 6 jugadores.</p>
   </div>
@@ -1317,7 +1319,7 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","¡A JUGAR!":"LET'S PLAY!","🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar":"🎁 Welcome! Here are 10 🔑 to get started","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🗺️ Vota el mapa:":"🗺️ Vote for the map:","Votos":"Votes","Nadie ha votado: el mapa saldrá al azar":"Nobody voted yet: the map will be random","🎲 Al azar":"🎲 Random","¡A JUGAR!":"LET'S PLAY!","🎁 ¡Bienvenido! Te regalamos 10 🔑 para empezar":"🎁 Welcome! Here are 10 🔑 to get started","🟢 BÁSICAS":"🟢 BASIC","🔵 NORMALES":"🔵 NORMAL","🟣 PODEROSAS":"🟣 POWERFUL","🟡 LAS MEJORES":"🟡 THE BEST","🛒 SALA DE ARMAS":"🛒 WEAPON ROOM","🖱️ Haz clic izquierdo para ver cuánto vale":"🖱️ Left-click to see the price","🛒 COMPRAR":"🛒 BUY","Cerrar":"Close",
 "Vale":"Costs","Gratis":"Free","✅ Ya es tuya · EQUIPAR":"✅ It's yours · EQUIP","¡Equipada!":"Equipped!","No te alcanzan las llaves":"Not enough keys","Ranura":"Slot","Principal":"Primary","Secundaria":"Secondary","Cuerpo a cuerpo":"Melee","Utilidad":"Utility",
 "Daño":"Damage","Velocidad":"Speed","Alcance":"Range","Cadencia":"Fire rate","Cargador":"Magazine","Usos por ronda":"Uses per round","⬅ VOLVER AL LOBBY":"⬅ BACK TO LOBBY","✅ TUYA":"✅ YOURS",
 "Máximo 2 amigos (3 personas hablando)":"Max 2 friends (3 people talking)","➕ Amigo":"➕ Friend","✅ Amigo":"✅ Friend","💬🎤 El chat y la voz son solo con tus amigos (máximo 2). Toca ➕ Amigo.":"💬🎤 Chat and voice are only with your friends (max 2). Tap ➕ Friend.",
@@ -4715,8 +4717,7 @@ function closeLobbyUI(id){ $(id).classList.add('hidden'); refreshKeys(); uiOpen=
 function startFromPad(p){
   if(TOUCH&&p.mode==='friend'){ toasts.push({txt:'El 2 vs 2 con amigo (pantalla dividida) es solo para computador',life:2.5}); curPad=null; padT=-99; return; }
   if(p.mode==='practice'){ startPractice(); return; }
-  // entra directo a jugar contra los robots (mapa al azar)
-  mapPad=p; state='mapselect'; pickMap(-1);
+  openMapSelect(p);
 }
 // ---------- elegir mapa ----------
 let mapPad=null, mapTimer=0, mapTimerId=null;
@@ -5179,8 +5180,18 @@ function netDrop(id){ if(!NET.host||!NET.conns[id]) return; delete NET.conns[id]
 function netOnLeft(id){ if(state==='over'&&NET.inGame&&!RM.done){ RM.votes[id]=false; if(NET.host) rmCheck(); }
   const f=fighters.find(x=>x.netId===id); if(f){ toasts.push({txt:f.label+' salió de la partida',life:2.5}); if(!f.dead) killed(f,f,f.weapon,true); }
   if(!NET.inGame) netShowRoom(); }
-function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map}); netShowRoom(); voiceSync(); }
-function netShowRoom(){ try{ frAuto(); }catch(e){} $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
+function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map,votes:NET.votes||{}}); netShowRoom(); voiceSync(); }
+function netVoteUI(){ NET.votes=NET.votes||{}; const sel=$('netVote');
+  if(!sel.options.length){ sel.add(new Option(T('🎲 Al azar'),-1)); ARENAS.forEach((a,i)=>sel.add(new Option((a.emoji||'🗺️')+' '+T(a.name),i)));
+    sel.onchange=()=>{ NET.votes[NET.myId]=+sel.value; netSend({t:'mv',map:+sel.value}); netShowRoom(); }; }
+  sel.value=String(NET.votes[NET.myId]??-1);
+  const cnt={}; for(const p of NET.players){ const v=NET.votes[p.id]; if(v!=null&&v>=0){ (cnt[v]=cnt[v]||[]).push(p.name); } }
+  const parts=Object.entries(cnt).sort((a,b)=>b[1].length-a[1].length).map(([i,n])=>`${ARENAS[i].emoji||'🗺️'} ${T(ARENAS[i].name)}: ${n.length} (${n.join(', ')})`);
+  $('netVotes').textContent=parts.length?T('Votos')+' → '+parts.join(' · '):T('Nadie ha votado: el mapa saldrá al azar'); }
+function netVoteWinner(){ const cnt={}; for(const p of NET.players){ const v=(NET.votes||{})[p.id]; if(v!=null&&v>=0) cnt[v]=(cnt[v]||0)+1; }
+  const ks=Object.keys(cnt); if(!ks.length) return Math.floor(Math.random()*ARENAS.length);
+  const mx=Math.max(...ks.map(k=>cnt[k])), top=ks.filter(k=>cnt[k]===mx); return +top[Math.floor(Math.random()*top.length)]; }
+function netShowRoom(){ try{ frAuto(); }catch(e){} try{ netVoteUI(); }catch(e){} $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
   $('netHostBox').classList.toggle('hidden',!NET.host); $('netWait').classList.toggle('hidden',NET.host);
   for(const t of [0,1]){ const box=$('netTeam'+t); box.innerHTML='';
     NET.players.filter(p=>p.team===t).forEach(p=>{ const d=document.createElement('div'); d.style.cssText='background:rgba(10,12,24,.6);border-radius:10px;padding:8px;margin-top:6px;font-weight:800;cursor:'+(NET.host?'pointer':'default');
@@ -5194,8 +5205,8 @@ function netShowRoom(){ try{ frAuto(); }catch(e){} $('netStart').classList.add('
   $('netGo').style.opacity=NET.players.length>=2?1:.45; }
 function netGo(){ if(!NET.host) return; if(NET.players.length<2){ netStatus('Necesitas al menos un amigo en la sala','#ff8fa3'); return; }
   if(!NET.players.some(p=>p.team===0)||!NET.players.some(p=>p.team===1)){ netStatus('Pon al menos un jugador en cada equipo','#ff8fa3'); return; }
-  const map=NET.map>=0?NET.map:Math.floor(Math.random()*ARENAS.length); netSend({t:'start',players:NET.players,map}); netStartMatch(NET.players,map); }
-function netStartMatch(players,mapIdx){ NET.players=players; NET.inGame=true; NET.lastMap=mapIdx; RM.done=true; clearInterval(RM.timer); $('rematchBox').classList.add('hidden'); $('netScr').classList.add('hidden'); $('menu').classList.add('hidden'); $('over').classList.add('hidden');
+  const map=netVoteWinner(); NET.votes={}; netSend({t:'start',players:NET.players,map}); netStartMatch(NET.players,map); }
+function netStartMatch(players,mapIdx){ NET.votes={}; NET.players=players; NET.inGame=true; NET.lastMap=mapIdx; RM.done=true; clearInterval(RM.timer); $('rematchBox').classList.add('hidden'); $('netScr').classList.add('hidden'); $('menu').classList.add('hidden'); $('over').classList.add('hidden');
   chooseArena(ARENAS[mapIdx]); inLobby=false; lobbyGroup.visible=false; setArenaVisible(true); fromEditor=false; mode='online';
   matchLevels={}; setWorld(AW,AH); currentMap=bigParts(currentMap); applyTheme(arenaTheme); score={p:0,b:0}; feed=[]; matchDone=[]; matchKeys=0; netStartRound(); requestLock(); }
 function netStartRound(){
@@ -5237,10 +5248,11 @@ function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw
     const s=JSON.stringify(m); for(const id in NET.conns) if(id!==fromConn){ try{ NET.conns[id].send(s); }catch(e){} } }
   switch(m.t){
     case 'full': netStatus(m.inGame?'Esa sala ya está jugando. Espera a que termine.':'La sala está llena (máximo 6).','#ff8fa3'); return;
-    case 'room': NET.players=m.players; NET.map=m.map; frAuto(); voiceSync(); if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
+    case 'room': NET.players=m.players; NET.map=m.map; if(m.votes) NET.votes=m.votes; frAuto(); voiceSync(); if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
     case 'start': netStartMatch(m.players,m.map); return;
     case 'left': netOnLeft(m.id); NET.players=NET.players.filter(p=>p.id!==m.id); voiceDrop(m.id); return;
     case 'chat': if(isFriend(m.from)) chatAdd(m.n,m.txt,m.c); return;
+    case 'mv': NET.votes=NET.votes||{}; NET.votes[m.from]=m.map; try{ if(!NET.inGame&&!$('netRoom').classList.contains('hidden')) netShowRoom(); }catch(e){} return;
     case 'fr': NET.frOf[m.from]=Array.isArray(m.list)?m.list:[]; frChanged(); try{ if(!NET.inGame&&!$('netRoom').classList.contains('hidden')) netShowRoom(); }catch(e){} return; }
   if(!NET.inGame) return;
   const f=netById(m.from);

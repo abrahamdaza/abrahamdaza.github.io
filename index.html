@@ -158,6 +158,7 @@
       <button id="avatarBtn">👕 AVATAR</button>
       <button id="spinBtn">🎁 RULETA</button>
       <button id="boxBtn" class="hidden">📦 CAJAS</button>
+      <button id="adBtn" style="background:linear-gradient(90deg,#3ddc84,#2fa8ff)">📺 ANUNCIO +2 🔑</button>
       <button id="rankBtn" style="background:linear-gradient(90deg,#ffb020,#ffd84f);color:#2a1a00">🏆 TOP 20</button>
       <span id="keyCount" style="align-self:center;font-weight:800;font-size:20px;color:#ffd84f;padding:0 10px;text-shadow:0 2px 6px rgba(0,0,0,.7)"></span>
     </div>
@@ -260,6 +261,14 @@
   <p style="font-size:14px">Elige cualquiera de las armas que ya compraste. Para conseguir más, ve a la 🛒 TIENDA del lobby. <b>M</b> para cerrar.</p>
   <div id="loadGrid" style="display:flex;flex-direction:column;gap:14px;width:min(1000px,100%)"></div>
   <button id="loadBack" class="go" style="margin:14px 0 20px">LISTO</button>
+</div>
+
+<div id="adScr" class="screen hidden" style="z-index:8">
+  <div style="font-size:90px;line-height:1">📺</div>
+  <h2>¿Quieres un anuncio?</h2>
+  <div style="font-size:20px;font-weight:700;max-width:520px;text-align:center">Mira un anuncio corto y te regalamos <b style="color:#ffd84f">2 🔑</b></div>
+  <div id="adMsg" style="font-size:20px;font-weight:800;min-height:28px;color:#ffd84f;text-align:center;max-width:560px"></div>
+  <div class="row"><button class="go" id="adYes" style="background:linear-gradient(90deg,#3ddc84,#2fa8ff)">✅ Sí, quiero un anuncio</button><button id="adNo">❌ No, gracias</button></div>
 </div>
 
 <div id="rankScr" class="screen hidden" style="z-index:7;justify-content:flex-start;overflow-y:auto;padding-top:22px">
@@ -1295,7 +1304,10 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🏆 TOP 20":"🏆 TOP 20","🏆 LOS 20 MEJORES":"🏆 TOP 20 PLAYERS","LOS 20 MEJORES":"TOP 20 PLAYERS","Los jugadores con más nivel de todo el mundo · cada partida ganada sube 1 nivel":"The highest-level players in the world · every match you win = +1 level",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","📺 ANUNCIO +2 🔑":"📺 AD +2 🔑","¿Quieres un anuncio?":"Do you want to watch an ad?","✅ Sí, quiero un anuncio":"✅ Yes, show me an ad","❌ No, gracias":"❌ No, thanks",
+"Mira un anuncio corto y te regalamos":"Watch a short ad and we give you","📺 ANUNCIO":"📺 AD","Pulsa E: ANUNCIO +2 🔑":"Press E: AD +2 🔑","ANUNCIO +2 🔑":"AD +2 🔑",
+"Cargando anuncio…":"Loading ad…","✅ ¡Ganaste 2 🔑!":"✅ You got 2 🔑!","No hay anuncio ahora. Intenta en un rato.":"No ad right now. Try again in a while.",
+"Los anuncios funcionan en la versión de CrazyGames del juego.":"Ads work in the CrazyGames version of the game.","¿Quieres un anuncio? +2 🔑 por cada anuncio":"Want an ad? +2 🔑 for each ad","🏆 TOP 20":"🏆 TOP 20","🏆 LOS 20 MEJORES":"🏆 TOP 20 PLAYERS","LOS 20 MEJORES":"TOP 20 PLAYERS","Los jugadores con más nivel de todo el mundo · cada partida ganada sube 1 nivel":"The highest-level players in the world · every match you win = +1 level",
 "Tu nombre en el ranking:":"Your ranking name:","Tu nombre":"Your name","Guardar":"Save","🔄 Actualizar":"🔄 Refresh","Cargando…":"Loading…","Elige tu nombre para salir en el ranking":"Choose a name to appear in the ranking",
 "Ese nombre no se puede usar":"That name can't be used","Sin conexión: mostrando la última lista guardada":"Offline: showing the last saved list","Todavía no hay jugadores. ¡Gana una partida y sé el primero!":"No players yet. Win a match and be first!",
 "El ranking mundial se está conectando. Por ahora ves tu propio puesto.":"The world ranking is being connected. For now you see your own spot.","ganadas":"wins","TÚ":"YOU","Pulsa E: LOS 20 MEJORES":"Press E: TOP 20 PLAYERS","EN VIVO":"LIVE","Duelos de bloques en primera persona · 1 vs 1 · 2 vs 2 · 3 vs 3":"First-person block duels · 1v1 · 2v2 · 3v3",
@@ -4382,6 +4394,7 @@ const PADS=[
 const KIOSKS=[
   {id:'shop',     x:190, y:515, label:'TIENDA'},
   {id:'rank',     x:1080, y:560, label:'LOS 20 MEJORES'},
+  {id:'ad',       x:125, y:250, label:'ANUNCIO +2 🔑'},
 ];
 const DIFF_NAMES=['FÁCIL','NORMAL','DIFÍCIL'];
 const lobbyGroup=new THREE.Group(); lobbyGroup.visible=false; scene.add(lobbyGroup);
@@ -4520,6 +4533,8 @@ function buildLobby(){
     add(new THREE.BoxGeometry(.7,.5,.9),M(0x8a5a2b),toX(155),.25,toZ(420)); add(new THREE.BoxGeometry(.72,.06,.92),M(0x5a3a18),toX(155),.5,toZ(420));
     for(let i=0;i<5;i++) add(new THREE.SphereGeometry(.09,10,8),new THREE.MeshBasicMaterial({color:0xfff2b0}),toX(140),2.75,toZ(450+i*32));   // foquitos del toldo
     const lamp=new THREE.PointLight(0xffd9a0,.7,9); lamp.position.set(toX(125),2.6,toZ(515)); L.add(lamp); }
+  // pantalla de anuncios (lado izquierdo)
+  { const ab=makeAdBoard(); ab.position.set(toX(48),0,toZ(250)); ab.rotation.y=Math.PI/2; lobbyGroup.add(ab); }
   // tablero de los 20 mejores (lado derecho)
   { const rb=makeRankBoard(); rb.position.set(toX(1150),0,toZ(560)); rb.rotation.y=-Math.PI/2; lobbyGroup.add(rb); }
   // kioscos
@@ -4547,6 +4562,7 @@ function lobbyInteract(){
   const k=nearKiosk(); if(!k) return;
   beep(700,.06,'triangle',.05);
   if(k.id==='shop'){ uiOpen=true; releaseLock(); renderArmory(); $('armoryScr').classList.remove('hidden'); }
+  else if(k.id==='ad'){ uiOpen=true; releaseLock(); openAdAsk(); }
   else if(k.id==='rank'){ uiOpen=true; releaseLock(); openRank(); }
   else if(k.id==='missions'){ uiOpen=true; releaseLock(); renderMissions(); $('missionScr').classList.remove('hidden'); }
   else if(k.id==='diff'){ difficulty=(difficulty+1)%3; refreshDiffSign(); toasts.push({txt:'Dificultad de los bots: '+DIFF_NAMES[difficulty],life:1.5}); }
@@ -4605,6 +4621,41 @@ function initRank(){ $('rankBtn').onclick=openRank; $('rankBack').onclick=()=>cl
   // después de cada partida se manda tu nivel al ranking
   const _end=endMatch; endMatch=function(){ const r=_end.apply(this,arguments); setTimeout(()=>rankSubmit().then(rankFetch),600); return r; };
   setTimeout(()=>{ rankSubmit().then(rankFetch); },2500); setInterval(()=>{ if(state==='lobby'||state==='menu') rankFetch(); },90000); }
+// ===== ANUNCIOS CON PREMIO: cada anuncio visto da 2 llaves =====
+// Los anuncios de verdad (que pagan) los pone la plataforma: en CrazyGames los conecta crazygames/cg.js (window.ADS).
+// También acepta Google H5 Games Ads si la página tiene adBreak configurado con una cuenta de AdSense.
+window.ADS = window.ADS || null;
+function adsReady(){ if(window.ADS&&window.ADS.available&&window.ADS.available()) return 'sdk'; if(typeof window.adBreak==='function'&&window.ADSENSE_ON) return 'h5'; return ''; }
+function showRewardAd(cb){ const k=adsReady();
+  if(k==='sdk') return window.ADS.reward(cb);
+  if(k==='h5'){ let ok=false; window.adBreak({type:'reward',name:'llaves',beforeAd:()=>{ try{ ac&&ac.suspend(); }catch(e){} }, afterAd:()=>{ try{ ac&&ac.resume(); }catch(e){} },
+      beforeReward:(show)=>show(), adViewed:()=>{ ok=true; }, adDismissed:()=>{ ok=false; }, adBreakDone:()=>cb(ok) }); return; }
+  cb(false,'none'); }
+let adFrom='menu', adBusy=false;
+function openAdAsk(){ adFrom=$('menu').classList.contains('hidden')?'':'menu'; if(adFrom) $('menu').classList.add('hidden'); $('adScr').classList.remove('hidden'); $('adMsg').textContent=''; $('adYes').disabled=false; }
+function closeAdAsk(){ if(adBusy) return; $('adScr').classList.add('hidden'); if(adFrom) $('menu').classList.remove('hidden'); else closeLobbyUI('adScr'); refreshKeys(); }
+function adYes(){ if(adBusy) return; adBusy=true; $('adYes').disabled=true; $('adMsg').textContent=T('Cargando anuncio…');
+  showRewardAd((ok,why)=>{ adBusy=false;
+    if(ok){ profile.keys+=2; saveProfile(); refreshKeys(); $('adMsg').textContent=T('✅ ¡Ganaste 2 🔑!'); [784,1046,1318].forEach((f,i)=>setTimeout(()=>beep(f,.14,'sine',.08),i*110)); setTimeout(()=>{ $('adYes').disabled=false; },1500); }
+    else { $('adMsg').textContent=T(why==='none'?'Los anuncios funcionan en la versión de CrazyGames del juego.':'No hay anuncio ahora. Intenta en un rato.'); setTimeout(()=>{ $('adYes').disabled=false; },2500); } }); }
+function initAds(){ $('adBtn').onclick=openAdAsk; $('adYes').onclick=adYes; $('adNo').onclick=closeAdAsk; }
+function makeAdBoard(){ const g=new THREE.Group(), SW=7, SH=4.2;
+  const c=document.createElement('canvas'); c.width=700; c.height=420; const x=c.getContext('2d');
+  const bg=x.createLinearGradient(0,0,0,420); bg.addColorStop(0,'#13234a'); bg.addColorStop(1,'#0a1026'); x.fillStyle=bg; x.fillRect(0,0,700,420);
+  const hg=x.createLinearGradient(0,0,700,0); hg.addColorStop(0,'#3ddc84'); hg.addColorStop(1,'#2fa8ff'); x.fillStyle=hg; x.fillRect(0,0,700,86);
+  x.textAlign='center'; x.fillStyle='#08162e'; x.font='900 56px Rubik, Arial'; x.fillText(T('📺 ANUNCIO'),350,62);
+  x.fillStyle='#fff'; let fs=44; x.font='900 '+fs+'px Rubik, Arial'; while(x.measureText(T('¿Quieres un anuncio?')).width>640&&fs>20){ fs--; x.font='900 '+fs+'px Rubik, Arial'; } x.fillText(T('¿Quieres un anuncio?'),350,170);
+  x.fillStyle='#ffd84f'; x.font='900 96px Rubik, Arial'; x.fillText('+2 🔑',350,290);
+  x.fillStyle='rgba(255,255,255,.8)'; x.font='800 30px Rubik, Arial'; x.fillText(T('Pulsa E: ANUNCIO +2 🔑'),350,375);
+  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4;
+  const scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})); scr.position.y=SH/2+.5; g.add(scr);
+  const fm=new THREE.MeshStandardMaterial({color:0x1b1e2c,metalness:.6,roughness:.35}), led=new THREE.MeshBasicMaterial({color:0x3ddc84});
+  for(const sx of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.3,SH+1.1,.4),fm); post.position.set(sx*(SW/2+.15),(SH+1.1)/2,0); post.castShadow=true; g.add(post);
+    const l=new THREE.Mesh(new THREE.BoxGeometry(.07,SH,.45),led); l.position.set(sx*(SW/2+.02),SH/2+.5,0); g.add(l); }
+  const top=new THREE.Mesh(new THREE.BoxGeometry(SW+.6,.4,.45),fm); top.position.y=SH+.75; g.add(top);
+  const tl=new THREE.Mesh(new THREE.BoxGeometry(SW,.08,.5),led); tl.position.y=SH+.52; g.add(tl);
+  const glow=new THREE.PointLight(0x3ddc84,.7,12); glow.position.set(0,3,1); g.add(glow);
+  return g; }
 // tablero grande en el lobby
 function makeRankBoard(){ const g=new THREE.Group(), SW=10, SH=6.2;
   const c=document.createElement('canvas'); c.width=1024; c.height=636; const ctx=c.getContext('2d'); const tex=new THREE.CanvasTexture(c); tex.anisotropy=4;
@@ -5505,7 +5556,7 @@ $('loadBack').onclick=()=>{ if(loadOpen) toggleLoadMenu(); };
 profile.welcome=false;
 
 // ================== Arranque ==================
-loadMap(DEFAULT_MAP); initCover(); initSpin(); initRank(); initNet(); buildCover(); applyGameName();
+loadMap(DEFAULT_MAP); initCover(); initSpin(); initRank(); initAds(); initNet(); buildCover(); applyGameName();
 // calidad automática: si el juego va lento, baja la resolución y las sombras para que no se trabe
 let qLevel=0, qAcc=0, qN=0;
 function applyQuality(){ if(qLevel===1){ renderer.setPixelRatio(1); sun.shadow.mapSize.set(1024,1024); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } }

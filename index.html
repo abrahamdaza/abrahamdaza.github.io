@@ -93,6 +93,24 @@
   @media (orientation:portrait){ body.isTouch:not(.noRotate) #rotate{display:flex} }
   #rotate button{font-size:20px;padding:14px 26px}
   body.isTouch #keysBox, body.isTouch #helpBtn{display:none !important}
+  /* ---- chat ---- */
+  #chatBox{position:fixed;left:12px;bottom:150px;width:min(360px,46vw);z-index:8;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+  #chatLog div{background:rgba(10,12,24,.62);border-radius:8px;padding:4px 9px;margin-top:3px;font-size:14px;line-height:1.3;word-wrap:break-word;transition:opacity .6s}
+  #chatLog div b{margin-right:6px}
+  #chatLog div.old{opacity:0}
+  #chatBox.open #chatLog div.old, #chatBox.room #chatLog div.old{opacity:1}
+  #chatBar{display:none;gap:6px;pointer-events:auto}
+  #chatBox.open #chatBar, #chatBox.room #chatBar{display:flex}
+  #chatIn{flex:1;min-width:0;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:2px solid #ffd84f;background:rgba(10,12,24,.85);color:#fff}
+  #chatBar button{font-size:17px;padding:6px 12px;border-radius:10px}
+  #micBtn.on{background:#3ddc84;color:#0d0f1a;animation:micPulse 1.2s infinite}
+  @keyframes micPulse{50%{box-shadow:0 0 0 6px rgba(61,220,132,.35)}}
+  #chatHint{font-size:12px;opacity:.6;text-shadow:0 1px 3px #000}
+  #chatBox.open #chatHint{display:none}
+  #chatBox.room{position:static;width:100%;pointer-events:auto}
+  #chatBox.room #chatLog{max-height:150px;overflow-y:auto;text-align:left}
+  body.isTouch #chatBox{bottom:auto;top:70px;width:min(300px,40vw)}
+  body.isTouch #chatHint{display:none}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;z-index:10;background:#0d0f1a}
 </style>
 </head>
@@ -100,6 +118,11 @@
 <canvas id="gl"></canvas>
 <canvas id="hud"></canvas>
 <div id="touch" class="hidden"></div>
+<div id="chatBox" class="hidden">
+  <div id="chatLog"></div>
+  <div id="chatBar"><input id="chatIn" maxlength="120" placeholder="Escribe y pulsa Enter…" autocomplete="off"><button id="chatSend">➤</button><button id="micBtn" title="Chat de voz">🎤</button></div>
+  <div id="chatHint">Enter = escribir · 🎤 = hablar</div>
+</div>
 <div id="rotate"><div style="font-size:70px">📱↻</div>Este juego se ve mejor con el celular acostado<button class="go" id="rotLock">🔄 PONER HORIZONTAL</button><button id="rotSkip">Jugar así</button><div style="font-size:14px;opacity:.7;font-weight:500">Si no gira, revisa que la rotación automática de tu celular esté activada.</div></div>
 <div id="loading">💥 ABRAHAM KABLOK! · Cargando…</div>
 
@@ -1637,6 +1660,7 @@ function groundAt(x,y,z,r=18){
   return g;
 }
 function physics(f,dt){
+  if(f.kx||f.ky){ moveFighter(f,f.kx*dt,f.ky*dt); const damp=Math.pow(f.onGround?.03:.45,dt); f.kx*=damp; f.ky*=damp; if(Math.hypot(f.kx,f.ky)<8) f.kx=f.ky=0; }
   const g=groundAt(f.x,f.y,f.z,f.r);
   if(f.vz>0 || f.z>g+(f.onGround?STEP:0.001)){
     f.onGround=false; f.vz-=GRAV*dt; f.z+=f.vz*dt;
@@ -1723,6 +1747,11 @@ function explode(cx,cy,by,radius,maxDmg,friendly,ez=.8,wid=null){
   boom.position.set(toX(cx),ez,toZ(cy)); boomT=.4; boom.userData.r=radius/U;
   for(const f of fighters) if(!f.isBot){ const d=Math.hypot(f.x-cx,f.y-cy); f.shake=Math.max(f.shake, d<400?1.2*(1-d/500):0); }
   noise(.6,.3*vol3({x:cx,y:cy})); beep(80,.4,'sawtooth',.08,.3);
+  // la explosión empuja y eleva a todos los que estén cerca (también al que la lanzó: ¡salto con bazuca!)
+  for(const f of fighters){ if(f.dead||f.remote) continue; const R=radius*1.35, d=Math.hypot(f.x-cx,f.y-cy,(f.z+.9-ez)*U); if(d>=R) continue;
+    const k=1-d/R, a=Math.atan2(f.y-cy,f.x-cx), push=(f===by?330:480)*k;
+    f.vz=Math.max(f.vz||0,0)*.5+5+k*10; f.onGround=false; f.slide=0; f.kx=(f.kx||0)+Math.cos(a)*push; f.ky=(f.ky||0)+Math.sin(a)*push;
+    if(f===by&&!f.isBot&&state==='play') addStat('rocketJumps'); }
   for(const f of fighters){ if(f.dead||!LIVE()) continue; if(!friendly && by && f.team===by.team) continue;
     const d=Math.hypot(f.x-cx,f.y-cy,(f.z+1-ez)*U);
     if(d<radius){ const dmg=Math.round(maxDmg*(1-d/(radius*1.4))); f.hp-=netDmg(f,dmg,by,wid); texts.push({x:f.x,y:f.y,h:f.z+2.2,txt:dmg,life:.8,color:'#ffb03a'});
@@ -2953,7 +2982,7 @@ function releaseLock(){ if(TOUCH) return; try{ if(document.pointerLockElement) d
 document.addEventListener('pointerlockchange',()=>{
   locked=document.pointerLockElement===glCanvas;
   if(locked) hadLock=true;
-  else if(hadLock && !uiOpen && (state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')) pauseGame();
+  else if(hadLock && !uiOpen && !chatOpenFlag && (state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')) pauseGame();
 });
 let pausedFrom=null;
 function pauseGame(){ pausedFrom=state; state='pause'; mouse.down=false; mouse.right=false;
@@ -2971,13 +3000,14 @@ function initTouch(){
   const root=$('touch'); root.innerHTML='<div id="joyBase"></div><div id="joyKnob"></div>';
   const btns={}, B=(id,label,cls='')=>{ const d=document.createElement('div'); d.className='tb '+cls; d.textContent=label; root.appendChild(d); btns[id]=d; return d; };
   B('fire','🔥','fire'); B('fire2','🔥','fire'); B('jump','⬆️'); B('aim','🎯'); B('reload','🔄'); B('slide','⬇️'); B('dash','💨');
-  B('use','E','small'); B('weap','🔫 ARMAS','small'); B('util','💣','small'); B('cam','👁 V','small'); B('pause','⏸️','small');
+  B('use','E','small'); B('weap','🔫 ARMAS','small'); B('util','💣','small'); B('cam','👁 V','small'); B('pause','⏸️','small'); B('chat','💬','small');
   function layout(){ const w=innerWidth, port=innerHeight>innerWidth, h=innerHeight-(port?115:0), s=Math.min(1.15,Math.max(.62,Math.min(innerHeight/430,w/760))), P=(id,x,y,r)=>{ const d=btns[id]; d.style.left=(x-r)+'px'; d.style.top=(y-r)+'px'; d.style.width=d.style.height=(2*r)+'px'; d.dataset.cx=x; d.dataset.cy=y; d.dataset.r=r; };
     P('fire',w-75*s,h-115*s,44*s); P('aim',w-172*s,h-152*s,30*s); P('jump',w-165*s,h-52*s,30*s); P('reload',w-52*s,h-218*s,24*s);
     P('dash',w-122*s,h-238*s,22*s); P('util',w-200*s,h-238*s,20*s); P('use',w-262*s,h-160*s,20*s);
     P('slide',58*s,h-242*s,25*s); P('fire2',150*s,h-262*s,30*s);
-    const top=port?150:36*s; P('weap',w-90*s,top,24*s); P('cam',w-190*s,top,20*s); P('pause',36*s,top,20*s);
-    for(const id of ['use','weap','cam','pause','util']){ const d=btns[id]; d.style.width=(2*d.dataset.r*1.6)+'px'; d.style.left=(d.dataset.cx-d.dataset.r*1.6)+'px'; } }
+    const top=port?150:36*s; P('weap',w-90*s,top,24*s); P('cam',w-190*s,top,20*s); P('pause',36*s,top,20*s); P('chat',110*s,top,20*s);
+    btns.chat.style.display=NET.on?'':'none';
+  for(const id of ['use','weap','cam','pause','util','chat']){ const d=btns[id]; d.style.width=(2*d.dataset.r*1.6)+'px'; d.style.left=(d.dataset.cx-d.dataset.r*1.6)+'px'; } }
   layout(); addEventListener('resize',layout);
   const key=(k,code,down)=>dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key:k,code}));
   const hold={jump:[' ','Space'],slide:['c','KeyC'],dash:['Shift','ShiftLeft']}, tap={reload:['r','KeyR'],use:['e','KeyE'],weap:['m','KeyM'],util:['q','KeyQ'],cam:['v','KeyV']};
@@ -2992,6 +3022,7 @@ function initTouch(){
       if(id){ owner[t.identifier]={btn:id}; btns[id].classList.add('on');
         if(id==='fire'||id==='fire2'){ mouse.down=true; owner[t.identifier].look={x,y}; }
         else if(id==='aim'){ mouse.right=!mouse.right; btns.aim.classList.toggle('on',mouse.right); }
+        else if(id==='chat'){ if(NET.on) chatOpen(); else toasts.push({txt:'El chat es para el modo en línea',life:1.5}); }
         else if(id==='pause'){ if(state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice') pauseGame(); }
         else if(hold[id]) key(hold[id][0],hold[id][1],true);
         else if(tap[id]){ key(tap[id][0],tap[id][1],true); key(tap[id][0],tap[id][1],false); }
@@ -3017,7 +3048,7 @@ function initTouch(){
   // se muestra solo cuando estás jugando
   setInterval(()=>{ const on=(state==='play'||state==='countdown'||state==='roundEnd'||state==='lobby'||state==='practice')&&!uiOpen;
     root.classList.toggle('hidden',!on); if(!on){ mouse.down=false; TJ.fw=TJ.st=0; }
-    if(on&&!mouse.right) btns.aim.classList.remove('on'); },150);
+    if(on&&!mouse.right) btns.aim.classList.remove('on'); btns.chat.style.display=NET.on?'':'none'; },150);
 }
 // ================== MODO EN LÍNEA (salas con código) ==================
 // El que crea la sala es el "anfitrión": recibe los mensajes de todos y los reparte.
@@ -3032,7 +3063,7 @@ function netStatus(t,c){ $('netStatus').textContent=t; $('netStatus').style.colo
 function netPeerOpts(){ const o={debug:0}; try{ if(window.NET_SERVER) Object.assign(o,window.NET_SERVER); }catch(e){} return o; }
 function netCanWork(){ if(typeof Peer==='undefined'||!window.RTCPeerConnection){ netStatus('En esta página no se puede jugar en línea. Ábrelo desde tu página de GitHub o el programa del escritorio.','#ff8fa3'); return false; } return true; }
 function netMe(){ return {id:NET.myId,name:($('netName').value.trim()||'Jugador').slice(0,12),look:myLook(),level:profile.level||1}; }
-function netReset(){ try{ if(NET.peer) NET.peer.destroy(); }catch(e){} Object.assign(NET,{on:false,host:false,inGame:false,peer:null,conns:{},hostConn:null,myId:null,code:'',players:[]}); }
+function netReset(){ voiceOff(true); try{ if(NET.peer) NET.peer.destroy(); }catch(e){} Object.assign(NET,{on:false,host:false,inGame:false,peer:null,conns:{},hostConn:null,myId:null,code:'',players:[]}); }
 function openNet(){ $('menu').classList.add('hidden'); $('netScr').classList.remove('hidden'); $('netStart').classList.remove('hidden'); $('netRoom').classList.add('hidden');
   $('netName').value=profile.netName||('Jugador'+Math.floor(Math.random()*90+10)); netStatus(''); netCanWork(); }
 function netRestoreOver(){ $('again').classList.remove('hidden'); $('toMenu').textContent='Volver al lobby'; }
@@ -3042,7 +3073,7 @@ function netBackToRoom(){ netRestoreOver(); NET.inGame=false; for(const f of fig
 function netMakeCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<5;i++) c+=L[Math.floor(Math.random()*L.length)]; return c; }
 function netCreate(){ if(!netCanWork()) return; profile.netName=$('netName').value.trim(); saveProfile(); netReset(); initAudio();
   const code=netMakeCode(); netStatus('Creando sala…');
-  const peer=new Peer('abrahamkablok-'+code,netPeerOpts()); NET.peer=peer;
+  const peer=new Peer('abrahamkablok-'+code,netPeerOpts()); NET.peer=peer; voiceListen(peer);
   peer.on('open',id=>{ Object.assign(NET,{on:true,host:true,myId:id,code}); NET.players=[{...netMe(),team:0}]; netStatus('¡Sala lista! Comparte el código.','#3ddc84'); netShowRoom(); });
   peer.on('connection',c=>{ c.on('open',()=>{ if(NET.players.length>=6||NET.inGame){ c.send(JSON.stringify({t:'full',inGame:NET.inGame})); setTimeout(()=>c.close(),300); return; } NET.conns[c.peer]=c; });
     c.on('data',d=>netOnData(d,c.peer)); c.on('close',()=>netDrop(c.peer)); c.on('error',()=>netDrop(c.peer)); });
@@ -3050,18 +3081,18 @@ function netCreate(){ if(!netCanWork()) return; profile.netName=$('netName').val
   peer.on('disconnected',()=>{ try{ peer.reconnect(); }catch(e){} }); }
 function netJoin(){ if(!netCanWork()) return; const code=$('netCode').value.trim().toUpperCase(); if(code.length<4){ netStatus('Escribe el código que te mandaron','#ff8fa3'); return; }
   profile.netName=$('netName').value.trim(); saveProfile(); netReset(); initAudio(); netStatus('Conectando a la sala '+code+'…');
-  const peer=new Peer(netPeerOpts()); NET.peer=peer;
+  const peer=new Peer(netPeerOpts()); NET.peer=peer; voiceListen(peer);
   peer.on('open',id=>{ NET.myId=id; NET.code=code; const c=peer.connect('abrahamkablok-'+code,{reliable:true}); NET.hostConn=c;
     const to=setTimeout(()=>{ if(!NET.on) netStatus('No se encontró la sala '+code+'. Revisa el código.','#ff8fa3'); },9000);
     c.on('open',()=>{ clearTimeout(to); NET.on=true; c.send(JSON.stringify({t:'hello',...netMe()})); netStatus('¡Conectado!','#3ddc84'); });
     c.on('data',d=>netOnData(d,'host'));
     c.on('close',()=>{ if(NET.on){ netStatus('Se cerró la sala.','#ff8fa3'); const was=NET.inGame; netReset(); if(was){ $('over').classList.add('hidden'); goMenu(); $('menu').classList.add('hidden'); $('netScr').classList.remove('hidden'); } $('netRoom').classList.add('hidden'); $('netStart').classList.remove('hidden'); } }); });
   peer.on('error',e=>{ netStatus(e.type==='peer-unavailable'?'No existe una sala con el código '+code+'.':'Error de conexión: '+(e.type||e),'#ff8fa3'); }); }
-function netDrop(id){ if(!NET.host||!NET.conns[id]) return; delete NET.conns[id]; NET.players=NET.players.filter(p=>p.id!==id);
+function netDrop(id){ if(!NET.host||!NET.conns[id]) return; delete NET.conns[id]; voiceDrop(id); NET.players=NET.players.filter(p=>p.id!==id);
   netSend({t:'left',id}); netOnLeft(id); if(!NET.inGame) netBroadcastRoom(); }
 function netOnLeft(id){ const f=fighters.find(x=>x.netId===id); if(f){ toasts.push({txt:f.label+' salió de la partida',life:2.5}); if(!f.dead) killed(f,f,f.weapon,true); }
   if(!NET.inGame) netShowRoom(); }
-function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map}); netShowRoom(); }
+function netBroadcastRoom(){ netSend({t:'room',players:NET.players,map:NET.map}); netShowRoom(); voiceSync(); }
 function netShowRoom(){ $('netStart').classList.add('hidden'); $('netRoom').classList.remove('hidden'); $('netRoomCode').textContent=NET.code;
   $('netHostBox').classList.toggle('hidden',!NET.host); $('netWait').classList.toggle('hidden',NET.host);
   for(const t of [0,1]){ const box=$('netTeam'+t); box.innerHTML='';
@@ -3094,13 +3125,14 @@ function netRoundEnd(win){ const mine=win===player.team; if(mine) addStat('round
 function netById(id){ return fighters.find(f=>f.netId===id); }
 function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw==='string'?JSON.parse(raw):raw; }catch(e){ return; }
   if(NET.host&&fromConn!=='host'){ m.from=fromConn;
-    if(m.t==='hello'){ if(!NET.players.find(p=>p.id===fromConn)){ const n=[0,1].map(t=>NET.players.filter(p=>p.team===t).length); NET.players.push({id:fromConn,name:String(m.name||'Jugador').slice(0,12),look:m.look,level:m.level|0||1,team:n[0]<=n[1]?0:1}); beep(880,.1,'sine',.06); netBroadcastRoom(); } return; }
+    if(m.t==='hello'){ if(!NET.players.find(p=>p.id===fromConn)){ const n=[0,1].map(t=>NET.players.filter(p=>p.team===t).length); NET.players.push({id:fromConn,name:String(m.name||'Jugador').slice(0,12),look:m.look,level:m.level|0||1,team:n[0]<=n[1]?0:1}); beep(880,.1,'sine',.06); netBroadcastRoom(); const nm=String(m.name||'Jugador').slice(0,12); chatSys(nm+' entró a la sala'); netSend({t:'chat',n:'📢',txt:nm+' entró a la sala',c:'#9fe6ff'}); } return; }
     const s=JSON.stringify(m); for(const id in NET.conns) if(id!==fromConn){ try{ NET.conns[id].send(s); }catch(e){} } }
   switch(m.t){
     case 'full': netStatus(m.inGame?'Esa sala ya está jugando. Espera a que termine.':'La sala está llena (máximo 6).','#ff8fa3'); return;
-    case 'room': NET.players=m.players; NET.map=m.map; if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
+    case 'room': NET.players=m.players; NET.map=m.map; voiceSync(); if(!NET.inGame||state==='over'){ if(state==='over') netBackToRoom(); $('netScr').classList.remove('hidden'); netShowRoom(); } return;
     case 'start': netStartMatch(m.players,m.map); return;
-    case 'left': netOnLeft(m.id); NET.players=NET.players.filter(p=>p.id!==m.id); return; }
+    case 'left': netOnLeft(m.id); NET.players=NET.players.filter(p=>p.id!==m.id); voiceDrop(m.id); return;
+    case 'chat': chatAdd(m.n,m.txt,m.c); return; }
   if(!NET.inGame) return;
   const f=netById(m.from);
   switch(m.t){
@@ -3128,7 +3160,38 @@ function initInstall(){ if(!/^https:/.test(location.protocol)||!/github\.io$/.te
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
   addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEv=e; $('installBtn').classList.remove('hidden'); });
   $('installBtn').onclick=async()=>{ if(installEv){ installEv.prompt(); installEv=null; $('installBtn').classList.add('hidden'); } }; }
-function initNet(){ initInstall(); $('netBtn').onclick=()=>{ initAudio(); openNet(); }; $('netCreate').onclick=netCreate; $('netJoin').onclick=netJoin; $('netGo').onclick=netGo; $('netBack').onclick=netLeave;
+// ---------- chat de texto ----------
+function chatIsOpen(){ return document.activeElement===$('chatIn'); }
+let chatOpenFlag=false;
+function chatOpen(){ chatOpenFlag=true; for(const k in keys) keys[k]=false; for(const k in codes) codes[k]=false; mouse.down=false; const b=$('chatBox'); b.classList.add('open'); if(!TOUCH) releaseLock(); setTimeout(()=>$('chatIn').focus(),30); }
+function chatClose(){ chatOpenFlag=false; $('chatBox').classList.remove('open'); $('chatIn').blur(); if(NET.inGame&&!TOUCH&&(state==='play'||state==='countdown'||state==='roundEnd')) requestLock(); }
+function chatSend(){ const t=$('chatIn').value.trim().slice(0,120); $('chatIn').value=''; if(t&&NET.on){ const me=netMe(); const c=player?player.color:'#ffd84f'; netSend({t:'chat',n:me.name,txt:t,c}); chatAdd(me.name,t,c); } chatClose(); }
+function chatAdd(name,txt,color){ const log=$('chatLog'), d=document.createElement('div'), b=document.createElement('b'); b.textContent=name+':'; b.style.color=color||'#ffd84f';
+  d.appendChild(b); d.appendChild(document.createTextNode(txt)); log.appendChild(d); while(log.children.length>8) log.removeChild(log.firstChild);
+  setTimeout(()=>d.classList.add('old'),9000); beep(1200,.04,'sine',.03); }
+function chatSys(txt){ chatAdd('📢',txt,'#9fe6ff'); }
+// ---------- chat de voz (cada uno que activa el micrófono llama a los demás) ----------
+const VOICE={stream:null,calls:{},audio:{}};
+function voiceListen(peer){ peer.on('call',c=>{ c.answer(); c.on('stream',st=>voicePlay(c.peer,st)); c.on('close',()=>voiceStop(c.peer)); c.on('error',()=>voiceStop(c.peer)); }); }
+function voicePlay(id,st){ let a=VOICE.audio[id]; if(!a){ a=new Audio(); a.autoplay=true; a.playsInline=true; VOICE.audio[id]=a; } a.srcObject=st; a.play().catch(()=>{ chatSys('Toca la pantalla para escuchar a tus amigos'); addEventListener('pointerdown',()=>a.play().catch(()=>{}),{once:true}); }); }
+function voiceStop(id){ const a=VOICE.audio[id]; if(a){ a.srcObject=null; delete VOICE.audio[id]; } }
+function voiceDrop(id){ voiceStop(id); const c=VOICE.calls[id]; if(c){ try{ c.close(); }catch(e){} delete VOICE.calls[id]; } }
+function voiceSync(){ if(!VOICE.stream||!NET.peer) return; for(const p of NET.players){ if(p.id===NET.myId||VOICE.calls[p.id]) continue; try{ VOICE.calls[p.id]=NET.peer.call(p.id,VOICE.stream); }catch(e){} } }
+async function voiceToggle(){ if(!NET.on){ toasts.push({txt:'El chat de voz es para el modo en línea',life:1.5}); return; }
+  if(VOICE.stream){ voiceOff(); chatSys('Apagaste tu micrófono'); netSend({t:'chat',n:'📢',txt:netMe().name+' apagó el micrófono',c:'#9fe6ff'}); return; }
+  try{ VOICE.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  catch(e){ chatSys('No se pudo usar el micrófono. Revisa que le diste permiso al navegador.'); return; }
+  $('micBtn').classList.add('on'); voiceSync(); chatSys('Tu micrófono está encendido: tus amigos te escuchan'); netSend({t:'chat',n:'📢',txt:netMe().name+' encendió el micrófono 🎤',c:'#9fe6ff'}); }
+function voiceOff(quiet){ if(VOICE.stream){ VOICE.stream.getTracks().forEach(t=>t.stop()); VOICE.stream=null; }
+  for(const id in VOICE.calls){ try{ VOICE.calls[id].close(); }catch(e){} } VOICE.calls={}; try{ $('micBtn').classList.remove('on'); }catch(e){}
+  if(quiet){ for(const id in VOICE.audio) voiceStop(id); } }
+function chatTick(){ const box=$('chatBox'), inRoom=NET.on&&!NET.inGame&&!$('netScr').classList.contains('hidden')&&!$('netRoom').classList.contains('hidden');
+  box.classList.toggle('hidden',!NET.on||!(NET.inGame||inRoom)); box.classList.toggle('room',inRoom);
+  const want=inRoom?$('netRoom'):document.body; if(box.parentNode!==want) want.appendChild(box); }
+function initNet(){ initInstall();
+  $('chatIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); chatSend(); } else if(e.key==='Escape'){ e.preventDefault(); $('chatIn').value=''; chatClose(); } });
+  $('chatIn').addEventListener('keyup',e=>e.stopPropagation());
+  $('chatSend').onclick=chatSend; $('micBtn').onclick=voiceToggle; setInterval(chatTick,200); $('netBtn').onclick=()=>{ initAudio(); openNet(); }; $('netCreate').onclick=netCreate; $('netJoin').onclick=netJoin; $('netGo').onclick=netGo; $('netBack').onclick=netLeave;
   $('netCode').addEventListener('keydown',e=>{ if(e.key==='Enter') netJoin(); }); }
 // ================== RULETA SORPRESA ==================
 // a veces (no siempre) te regalan una ruleta al terminar una partida
@@ -3223,6 +3286,8 @@ function goMenu(){ releaseLock(); setWorld(1200,750); applyTheme('default'); inL
   document.getElementById('menu').classList.remove('hidden'); }
 
 addEventListener('keydown',e=>{
+  if(chatIsOpen()) return;
+  if(e.key==='Enter'&&NET.on&&(NET.inGame||!$('netRoom').classList.contains('hidden'))){ e.preventDefault(); chatOpen(); return; }
   const k=e.key.toLowerCase(); keys[k]=true; codes[e.code]=true;
   if(e.key===' '||e.key.startsWith('Arrow')||e.key==='Backspace'||e.key==='Enter'||e.key==='Tab') e.preventDefault();
   if(state==='editor'){ if(k==='q'){ rotated=!rotated; rampDir=(rampDir+1)%4; } if(k==='z'&&(e.ctrlKey||e.metaKey)) undoEdit(); return; }

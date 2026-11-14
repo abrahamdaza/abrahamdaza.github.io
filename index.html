@@ -158,6 +158,7 @@
       <button id="avatarBtn">👕 AVATAR</button>
       <button id="spinBtn">🎁 RULETA</button>
       <button id="boxBtn">📦 CAJAS</button>
+      <button id="rankBtn" style="background:linear-gradient(90deg,#ffb020,#ffd84f);color:#2a1a00">🏆 TOP 20</button>
       <span id="keyCount" style="align-self:center;font-weight:800;font-size:20px;color:#ffd84f;padding:0 10px;text-shadow:0 2px 6px rgba(0,0,0,.7)"></span>
     </div>
     <div class="row small">
@@ -259,6 +260,18 @@
   <p style="font-size:14px">Elige cualquiera de las armas que ya compraste. Para conseguir más, ve a la 🛒 TIENDA del lobby. <b>M</b> para cerrar.</p>
   <div id="loadGrid" style="display:flex;flex-direction:column;gap:14px;width:min(1000px,100%)"></div>
   <button id="loadBack" class="go" style="margin:14px 0 20px">LISTO</button>
+</div>
+
+<div id="rankScr" class="screen hidden" style="z-index:7;justify-content:flex-start;overflow-y:auto;padding-top:22px">
+  <h2>🏆 LOS 20 MEJORES</h2>
+  <div style="font-size:15px;opacity:.85;margin-top:-6px">Los jugadores con más nivel de todo el mundo · cada partida ganada sube 1 nivel</div>
+  <div id="rankNick" class="hidden" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:rgba(255,216,79,.12);border:2px solid #ffd84f;border-radius:14px;padding:10px 14px">
+    <b>Tu nombre en el ranking:</b><input id="rankNickIn" maxlength="12" placeholder="Tu nombre" style="font:700 18px Rubik,Arial;padding:6px 10px;border-radius:10px;border:none;width:170px"><button id="rankNickOk" class="go" style="padding:8px 18px;font-size:18px">Guardar</button>
+  </div>
+  <div id="rankMsg" style="font-size:16px;font-weight:700;color:#ffd84f;min-height:20px;text-align:center"></div>
+  <div id="rankList" style="display:flex;flex-direction:column;gap:5px;width:min(620px,100%)"></div>
+  <div id="rankMe" style="font-size:17px;font-weight:800"></div>
+  <div class="row" style="margin:8px 0 20px"><button id="rankRe">🔄 Actualizar</button><button id="rankBack" class="go">VOLVER</button></div>
 </div>
 
 <div id="missionScr" class="screen hidden" style="justify-content:flex-start;overflow-y:auto">
@@ -369,7 +382,10 @@
 // ================== IDIOMA (inglés por defecto en CrazyGames; español disponible) ==================
 const I18N_EN = {
 // ---- portada y menús ----
-"⚔️ TEMPORADA 1":"⚔️ SEASON 1","Duelos de bloques en primera persona · 1 vs 1 · 2 vs 2 · 3 vs 3":"First-person block duels · 1v1 · 2v2 · 3v3",
+"⚔️ TEMPORADA 1":"⚔️ SEASON 1","🏆 TOP 20":"🏆 TOP 20","🏆 LOS 20 MEJORES":"🏆 TOP 20 PLAYERS","LOS 20 MEJORES":"TOP 20 PLAYERS","Los jugadores con más nivel de todo el mundo · cada partida ganada sube 1 nivel":"The highest-level players in the world · every match you win = +1 level",
+"Tu nombre en el ranking:":"Your ranking name:","Tu nombre":"Your name","Guardar":"Save","🔄 Actualizar":"🔄 Refresh","Cargando…":"Loading…","Elige tu nombre para salir en el ranking":"Choose a name to appear in the ranking",
+"Ese nombre no se puede usar":"That name can't be used","Sin conexión: mostrando la última lista guardada":"Offline: showing the last saved list","Todavía no hay jugadores. ¡Gana una partida y sé el primero!":"No players yet. Win a match and be first!",
+"El ranking mundial se está conectando. Por ahora ves tu propio puesto.":"The world ranking is being connected. For now you see your own spot.","ganadas":"wins","TÚ":"YOU","Pulsa E: LOS 20 MEJORES":"Press E: TOP 20 PLAYERS","EN VIVO":"LIVE","Duelos de bloques en primera persona · 1 vs 1 · 2 vs 2 · 3 vs 3":"First-person block duels · 1v1 · 2v2 · 3v3",
 "▶ JUGAR":"▶ PLAY","🌐 EN LÍNEA":"🌐 ONLINE","🛒 TIENDA":"🛒 SHOP","📜 MISIONES":"📜 MISSIONS","👕 AVATAR":"👕 AVATAR","🎁 RULETA":"🎁 SPIN","📦 CAJAS":"📦 CRATES",
 "❔ Controles":"❔ Controls","📲 Instalar juego":"📲 Install game","✏️ Elegir nombre del juego":"✏️ Choose game name","✏️ Nombre del juego":"✏️ Game name",
 "Elige el nombre que saldrá en la portada.":"Choose the name shown on the cover.","LISTO":"DONE","CAJA DE ARENA":"SANDBOX","💥 ABRAHAM KABLOK! · Cargando…":"💥 ABRAHAM KABLOK! · Loading…",
@@ -487,6 +503,9 @@ const I18N_RX = [
   [/^Desbloquear · (\d+) 🔑$/, m=>`Unlock · ${m[1]} 🔑`],
   [/^Cargador (\d+)$/, m=>`Magazine ${m[1]}`],
   [/^Misiones completadas \(\+(\d+) 🔑\):$/, m=>`Missions completed (+${m[1]} 🔑):`],
+  [/^Tu puesto: #(\d+) de 20$/, m=>`Your spot: #${m[1]} of 20`],
+  [/^Aún no estás en el top 20 · tu nivel: (\d+)$/, m=>`Not in the top 20 yet · your level: ${m[1]}`],
+  [/^(\d+) ganadas$/, m=>`${m[1]} wins`],
   [/^Ronda (\d+) · (.+)$/, m=>`Round ${m[1]} · ${T(m[2])}`],
   [/^ALIADO (\d+)$/, m=>`ALLY ${m[1]}`],[/^ROJO (\d+)$/, m=>`RED ${m[1]}`],[/^AZUL (\d+)$/, m=>`BLUE ${m[1]}`],
   [/^Error de conexión: (.+)$/, m=>`Connection error: ${m[1]}`],
@@ -2928,6 +2947,7 @@ const PADS=[
 ];
 const KIOSKS=[
   {id:'shop',     x:190, y:515, label:'TIENDA'},
+  {id:'rank',     x:1080, y:560, label:'LOS 20 MEJORES'},
 ];
 const DIFF_NAMES=['FÁCIL','NORMAL','DIFÍCIL'];
 const lobbyGroup=new THREE.Group(); lobbyGroup.visible=false; scene.add(lobbyGroup);
@@ -3066,7 +3086,8 @@ function buildLobby(){
     add(new THREE.BoxGeometry(.7,.5,.9),M(0x8a5a2b),toX(155),.25,toZ(420)); add(new THREE.BoxGeometry(.72,.06,.92),M(0x5a3a18),toX(155),.5,toZ(420));
     for(let i=0;i<5;i++) add(new THREE.SphereGeometry(.09,10,8),new THREE.MeshBasicMaterial({color:0xfff2b0}),toX(140),2.75,toZ(450+i*32));   // foquitos del toldo
     const lamp=new THREE.PointLight(0xffd9a0,.7,9); lamp.position.set(toX(125),2.6,toZ(515)); L.add(lamp); }
-  // misiones
+  // tablero de los 20 mejores (lado derecho)
+  { const rb=makeRankBoard(); rb.position.set(toX(1150),0,toZ(560)); rb.rotation.y=-Math.PI/2; lobbyGroup.add(rb); }
   // kioscos
 }
 function refreshDiffSign(){ if(diffSign){ diffSign.material.map=signTex([{t:'DIFICULTAD',size:56},{t:DIFF_NAMES[difficulty],size:70}],'#444c66'); diffSign.material.needsUpdate=true; } }
@@ -3092,11 +3113,96 @@ function lobbyInteract(){
   const k=nearKiosk(); if(!k) return;
   beep(700,.06,'triangle',.05);
   if(k.id==='shop'){ uiOpen=true; releaseLock(); renderArmory(); $('armoryScr').classList.remove('hidden'); }
+  else if(k.id==='rank'){ uiOpen=true; releaseLock(); openRank(); }
   else if(k.id==='missions'){ uiOpen=true; releaseLock(); renderMissions(); $('missionScr').classList.remove('hidden'); }
   else if(k.id==='diff'){ difficulty=(difficulty+1)%3; refreshDiffSign(); toasts.push({txt:'Dificultad de los bots: '+DIFF_NAMES[difficulty],life:1.5}); }
   else if(k.id==='sandbox'){ inLobby=false; openEditor(); }
   else if(k.id==='avatar'){ uiOpen=true; releaseLock(); openAvatar(); }
 }
+// ===== RANKING MUNDIAL: los 20 mejores jugadores =====
+// Para conectarlo: crear un proyecto gratis en Firebase (Firestore) y poner aquí apiKey y projectId.
+window.RANK_CFG = window.RANK_CFG || {apiKey:'', projectId:''};
+const RANK={list:null, off:false, busy:false, board:null};
+try{ RANK.list=JSON.parse(localStorage.getItem('kablok_rank')||'null'); }catch(e){}
+function rankOn(){ return !!(RANK_CFG.apiKey&&RANK_CFG.projectId); }
+function rankUrl(p){ return 'https://firestore.googleapis.com/v1/projects/'+RANK_CFG.projectId+'/databases/(default)/documents'+p+'?key='+RANK_CFG.apiKey; }
+function rankId(){ if(!profile.uid){ const r=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2); profile.uid=r.replace(/-/g,'').slice(0,20); saveProfile(); } return profile.uid; }
+const RANK_BAD=/(puta|puto|mierd|verga|marica|pendej|culo|chimba|gonorr|hijuep|malparid|fuck|shit|bitch|nigg|sex|porn|hitler|nazi|dick|pussy)/i;
+function cleanNick(v){ v=String(v||'').replace(/[^\p{L}\p{N} _\-.]/gu,'').replace(/\s+/g,' ').trim().slice(0,12); return (v.length<2||RANK_BAD.test(v.replace(/[^\p{L}]/gu,'')))?'':v; }
+function myRankRow(){ return {id:rankId(), name:profile.nick||'—', level:profile.level||1, wins:(profile.stats&&profile.stats.wins)||0, me:true}; }
+async function rankSubmit(){ if(!rankOn()||!profile.nick) return; const m=myRankRow();
+  try{ const r=await fetch(rankUrl('/ranking/'+m.id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{
+      name:{stringValue:m.name}, level:{integerValue:String(m.level)}, wins:{integerValue:String(m.wins)}, score:{integerValue:String(m.level*100000+Math.min(m.wins,99999))}, t:{integerValue:String(Date.now())} }})});
+    if(!r.ok) throw 0; RANK.off=false; }catch(e){ RANK.off=true; } }
+async function rankFetch(){ if(!rankOn()||RANK.busy) return; RANK.busy=true;
+  try{ const r=await fetch(rankUrl(':runQuery'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'ranking'}],orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}],limit:20}})});
+    if(!r.ok) throw 0; const arr=await r.json();
+    RANK.list=arr.filter(x=>x.document).map(x=>{ const f=x.document.fields||{}; return {id:x.document.name.split('/').pop(), name:cleanNick(f.name&&f.name.stringValue)||'Jugador', level:+((f.level&&f.level.integerValue)||1), wins:+((f.wins&&f.wins.integerValue)||0)}; });
+    RANK.off=false; try{ localStorage.setItem('kablok_rank',JSON.stringify(RANK.list)); }catch(e){}
+  }catch(e){ RANK.off=true; }
+  RANK.busy=false; renderRank(); drawRankBoard(); }
+function rankRows(){ // la lista mundial; si no está conectada, al menos tu propio puesto
+  let L=(RANK.list||[]).map(r=>({...r, me:r.id===profile.uid}));
+  if(!rankOn()&&profile.nick) L=[myRankRow()];
+  else if(profile.nick){ const i=L.findIndex(r=>r.me); const m=myRankRow();
+    if(i>=0) L[i]={...m}; else if(L.length<20||m.level*100000+m.wins>L[L.length-1].level*100000+L[L.length-1].wins) L.push(m);
+    L.sort((a,b)=>(b.level-a.level)||(b.wins-a.wins)); L=L.slice(0,20); }
+  return L; }
+const MEDAL=['🥇','🥈','🥉'];
+function renderRank(){ if(!$('rankScr')||$('rankScr').classList.contains('hidden')) return;
+  const L=rankRows(), esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  $('rankNick').classList.toggle('hidden',!!profile.nick);
+  $('rankMsg').textContent = !profile.nick?T('Elige tu nombre para salir en el ranking'):!rankOn()?T('El ranking mundial se está conectando. Por ahora ves tu propio puesto.'):RANK.off?T('Sin conexión: mostrando la última lista guardada'):(RANK.list==null?T('Cargando…'):(!L.length?T('Todavía no hay jugadores. ¡Gana una partida y sé el primero!'):''));
+  $('rankList').innerHTML=L.map((r,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 14px;border-radius:12px;font-weight:800;font-size:19px;
+      background:${r.me?'linear-gradient(90deg,rgba(47,168,255,.55),rgba(47,168,255,.2))':i<3?'linear-gradient(90deg,rgba(255,200,60,.32),rgba(255,200,60,.08))':'rgba(10,14,30,.6)'};border:2px solid ${r.me?'#4fd1ff':i<3?'#ffd84f55':'transparent'}">
+      <span style="width:42px;text-align:center;font-size:${i<3?28:19}px">${i<3?MEDAL[i]:'#'+(i+1)}</span>
+      <span style="flex:1;text-align:left">${esc(r.name)}${r.me?' <small style="color:#4fd1ff">('+T('TÚ')+')</small>':''}</span>
+      <span style="color:${levelColor(r.level)};min-width:90px;text-align:right">⭐ ${r.level}</span>
+      <span style="opacity:.8;font-size:15px;min-width:90px;text-align:right">🏆 ${T(r.wins+' ganadas')}</span></div>`).join('');
+  const pos=L.findIndex(r=>r.me);
+  $('rankMe').textContent = !profile.nick?'':pos>=0?T('Tu puesto: #'+(pos+1)+' de 20'):T('Aún no estás en el top 20 · tu nivel: '+(profile.level||1)); }
+function openRank(){ $('menu').classList.add('hidden'); $('rankScr').classList.remove('hidden');
+  if(!profile.nick){ const sug=cleanNick($('netName')&&$('netName').value); $('rankNickIn').value=sug; }
+  renderRank(); rankSubmit().then(rankFetch); }
+function saveNick(){ const v=cleanNick($('rankNickIn').value); if(!v){ $('rankMsg').textContent=T('Ese nombre no se puede usar'); return; }
+  profile.nick=v; saveProfile(); if($('netName')&&!$('netName').value) $('netName').value=v; renderRank(); drawRankBoard(); rankSubmit().then(rankFetch); }
+function initRank(){ $('rankBtn').onclick=openRank; $('rankBack').onclick=()=>closeLobbyUI('rankScr'); $('rankRe').onclick=()=>{ renderRank(); rankFetch(); };
+  $('rankNickOk').onclick=saveNick; $('rankNickIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') saveNick(); });
+  // después de cada partida se manda tu nivel al ranking
+  const _end=endMatch; endMatch=function(){ const r=_end.apply(this,arguments); setTimeout(()=>rankSubmit().then(rankFetch),600); return r; };
+  setTimeout(()=>{ rankSubmit().then(rankFetch); },2500); setInterval(()=>{ if(state==='lobby'||state==='menu') rankFetch(); },90000); }
+// tablero grande en el lobby
+function makeRankBoard(){ const g=new THREE.Group(), SW=10, SH=6.2;
+  const c=document.createElement('canvas'); c.width=1024; c.height=636; const ctx=c.getContext('2d'); const tex=new THREE.CanvasTexture(c); tex.anisotropy=4;
+  RANK.board={ctx,tex}; drawRankBoard();
+  const scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})); scr.position.y=SH/2+.5; g.add(scr);
+  const fm=new THREE.MeshStandardMaterial({color:0x1b1e2c,metalness:.6,roughness:.35}), gold=new THREE.MeshStandardMaterial({color:0xffc83a,metalness:.85,roughness:.3,emissive:0x3a2800});
+  for(const sx of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(.35,SH+1.1,.45),fm); post.position.set(sx*(SW/2+.17),(SH+1.1)/2,0); post.castShadow=true; g.add(post);
+    const l=new THREE.Mesh(new THREE.BoxGeometry(.08,SH,.5),gold); l.position.set(sx*(SW/2+.02),SH/2+.5,0); g.add(l); }
+  const top=new THREE.Mesh(new THREE.BoxGeometry(SW+.7,.45,.5),fm); top.position.y=SH+.8; g.add(top);
+  const tl=new THREE.Mesh(new THREE.BoxGeometry(SW,.1,.55),gold); tl.position.y=SH+.55; g.add(tl);
+  const bot=new THREE.Mesh(new THREE.BoxGeometry(SW+.7,.4,.5),fm); bot.position.y=.3; g.add(bot);
+  // copa dorada encima
+  const cup=new THREE.Group(); const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.55,.25,.7,20,1,true),gold); bowl.position.y=.75; cup.add(bowl);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,.4,10),gold); stem.position.y=.25; cup.add(stem);
+  const foot=new THREE.Mesh(new THREE.CylinderGeometry(.32,.36,.12,16),gold); foot.position.y=.06; cup.add(foot);
+  for(const sx of [-1,1]){ const h=new THREE.Mesh(new THREE.TorusGeometry(.2,.045,8,16,Math.PI),gold); h.position.set(sx*.55,.8,0); h.rotation.z=sx>0?-Math.PI/2:Math.PI/2; cup.add(h); }
+  cup.position.y=SH+1.05; cup.scale.setScalar(1.3); g.add(cup);
+  const glow=new THREE.PointLight(0xffd84f,.8,14); glow.position.set(0,3,1); g.add(glow);
+  return g; }
+function drawRankBoard(){ const b=RANK.board; if(!b) return; const g=b.ctx, W=1024, H=636;
+  const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#1a1f3d'); bg.addColorStop(1,'#0b0e1d'); g.fillStyle=bg; g.fillRect(0,0,W,H);
+  const hg=g.createLinearGradient(0,0,W,0); hg.addColorStop(0,'#ffb020'); hg.addColorStop(1,'#ffe27a'); g.fillStyle=hg; g.fillRect(0,0,W,78);
+  g.fillStyle='#2a1a00'; g.textAlign='center'; g.font='900 48px Rubik, Arial'; g.fillText('🏆 LOS 20 MEJORES',W/2,56);
+  const L=rankRows(); g.textBaseline='middle';
+  if(!L.length){ g.fillStyle='#fff'; g.font='800 30px Rubik, Arial'; g.fillText(T(!profile.nick?'Elige tu nombre para salir en el ranking':'Todavía no hay jugadores. ¡Gana una partida y sé el primero!'),W/2,H/2); }
+  for(let i=0;i<20;i++){ const col=i<10?0:1, row=i%10, x=16+col*500, y=94+row*53, r=L[i];
+    g.fillStyle=r&&r.me?'rgba(47,168,255,.45)':i<3?'rgba(255,200,60,.22)':'rgba(255,255,255,.06)'; g.fillRect(x,y,492,47);
+    g.textAlign='center'; g.font=(i<3?'900 30px':'800 24px')+' Rubik, Arial'; g.fillStyle=i<3?'#ffd84f':'#9fb0d8'; g.fillText(i<3?MEDAL[i]:'#'+(i+1),x+34,y+25);
+    if(!r){ g.textAlign='left'; g.fillStyle='rgba(255,255,255,.25)'; g.font='700 22px Rubik, Arial'; g.fillText('—',x+76,y+25); continue; }
+    g.textAlign='left'; g.fillStyle='#fff'; let fs=26; g.font='800 '+fs+'px Rubik, Arial'; while(g.measureText(r.name).width>250&&fs>14){ fs--; g.font='800 '+fs+'px Rubik, Arial'; } g.fillText(r.name,x+76,y+25);
+    g.textAlign='right'; g.font='900 24px Rubik, Arial'; g.fillStyle=levelColor(r.level); g.fillText('⭐ '+r.level,x+480,y+25); }
+  g.textBaseline='alphabetic'; b.tex.needsUpdate=true; }
 function closeLobbyUI(id){ $(id).classList.add('hidden'); refreshKeys(); uiOpen=false;
   if(inLobby){ scene.remove(player.mesh); player.mesh=buildFighterMesh(new THREE.Color(player.color), myLook()); scene.add(player.mesh); player.gunShown=-1; applyLoadout(player); }
   else $('menu').classList.remove('hidden'); }
@@ -3965,7 +4071,7 @@ $('loadBack').onclick=()=>{ if(loadOpen) toggleLoadMenu(); };
 profile.welcome=false;
 
 // ================== Arranque ==================
-loadMap(DEFAULT_MAP); initCover(); initSpin(); initNet(); buildCover(); applyGameName();
+loadMap(DEFAULT_MAP); initCover(); initSpin(); initRank(); initNet(); buildCover(); applyGameName();
 // calidad automática: si el juego va lento, baja la resolución y las sombras para que no se trabe
 let qLevel=0, qAcc=0, qN=0;
 function applyQuality(){ if(qLevel===1){ renderer.setPixelRatio(1); sun.shadow.mapSize.set(1024,1024); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } }

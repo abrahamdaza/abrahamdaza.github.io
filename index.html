@@ -4533,6 +4533,18 @@ function buildLobby(){
   }
   // portal a la práctica (lado derecho)
   { const pt=makeScreen('practice',lobbyGroup); pt.position.set(toX(1162),0,toZ(260)); pt.rotation.y=-Math.PI/2; lobbyGroup.add(pt); }
+  // lobby cerrado: paredes altas y techo completo (no se ve el cielo)
+  { const L=lobbyGroup, H=9.8, Wd=1200/U, Dp=750/U;
+    const wallM=new THREE.MeshStandardMaterial({color:0xcfd5df,map:GTEX.stipple,roughness:.8,side:THREE.DoubleSide}), trim=new THREE.MeshStandardMaterial({color:0x3b4250,map:GTEX.brushed,metalness:.6,roughness:.4});
+    const ceil=new THREE.Mesh(new THREE.BoxGeometry(Wd+1.2,.3,Dp+1.2),new THREE.MeshStandardMaterial({color:0x8a919e,map:GTEX.stipple,roughness:.7})); ceil.position.set(0,H+.15,0); L.add(ceil);
+    for(const [w,d,x,z] of [[Wd+1.2,.4,0,-Dp/2-.4],[Wd+1.2,.4,0,Dp/2+.4],[.4,Dp+1.2,-Wd/2-.4,0],[.4,Dp+1.2,Wd/2+.4,0]]){
+      const m=new THREE.Mesh(new THREE.BoxGeometry(w,H,d),wallM); m.position.set(x,H/2,z); m.receiveShadow=true; L.add(m);
+      const t=new THREE.Mesh(new THREE.BoxGeometry(w,.35,d+.1),trim); t.position.set(x,H-.2,z); L.add(t);
+      const led=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d+.12),new THREE.MeshBasicMaterial({color:0x2fa8ff})); led.position.set(x,H-.55,z); L.add(led); }
+    // vigas y paneles de luz del techo
+    for(let i=0;i<=6;i++){ const b=new THREE.Mesh(new THREE.BoxGeometry(.35,.5,Dp+.8),trim); b.position.set(-Wd/2+i*Wd/6,H-.2,0); L.add(b); }
+    for(let i=0;i<6;i++) for(let j=0;j<3;j++){ const lp=new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.2),new THREE.MeshBasicMaterial({color:0xfff6e6,side:THREE.DoubleSide})); lp.rotation.x=Math.PI/2; lp.position.set(-Wd/2+(i+.5)*Wd/6,H-.02,-Dp/2+(j+.5)*Dp/3); L.add(lp); }
+    for(let i=0;i<4;i++) for(const zz of [-Dp/4,Dp/4]){ const pl=new THREE.PointLight(0xfff2de,.55,24,1.4); pl.position.set(-Wd/2+(i+.5)*Wd/4,H-1,zz); L.add(pl); } }
   // techo sobre la zona de los cuadros de juego (columnas, vigas, techo de metal y luces)
   { const L=lobbyGroup, x0=110, x1=1090, y0=-10, y1=300, H=6.6, cx=toX((x0+x1)/2), cz=toZ((y0+y1)/2), w=(x1-x0)/U, d=(y1-y0)/U;
     const steel=new THREE.MeshStandardMaterial({color:0x3b4250,map:GTEX.brushed,metalness:.75,roughness:.35}), roofM=new THREE.MeshStandardMaterial({color:0x5c6575,map:GTEX.stipple,metalness:.4,roughness:.55,side:THREE.DoubleSide});

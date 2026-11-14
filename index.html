@@ -521,6 +521,7 @@ if(!profile.level) profile.level=1;
 for(const sl of SLOTS){ const w=WEAPONS[profile.loadout[sl]]; if(!w||w.slot!==sl||!profile.unlocked.includes(w.name)) profile.loadout[sl]=FREE[sl]; }
 function saveProfile(){ try{ localStorage.setItem('duelo3d_v2', JSON.stringify(profile)); }catch(e){} }
 let toasts=[], matchDone=[], roundKills=0, matchKeys=0, roundTime=0, suddenShown=false;
+const ROUND_MAX=90;   // 1 minuto y 30 segundos por ronda
 function giveKeys(n){ profile.keys+=n; matchKeys+=n; saveProfile(); }
 function addStat(name, n=1){
   profile.stats[name]=(profile.stats[name]||0)+n;
@@ -2086,9 +2087,11 @@ function update(dt){
     updatePlayer(dt); if(p2) updateP2(dt);
     for(const f of fighters) if(f.isBot&&!f.remote) updateBot(f,dt);
     updatePickups(dt); updateThrows(dt);
-    // muerte súbita: si la ronda dura mucho, todos pierden vida poco a poco
-    roundTime+=dt; if(roundTime>75){ if(!suddenShown){ suddenShown=true; roundMsg='¡MUERTE SÚBITA!'; roundMsgT=2; beep(220,.4,'sawtooth',.06,.5); }
-      for(const f of fighters) if(!f.dead&&!f.remote){ f.hp-=5*dt; if(f.hp<=0) killed(f,f,f.weapon); } }
+    // cada ronda dura máximo 1:30; al acabarse el tiempo gana el equipo con más jugadores vivos (o más vida)
+    const prevT=Math.ceil(ROUND_MAX-roundTime); roundTime+=dt; const leftT=Math.ceil(ROUND_MAX-roundTime);
+    if(leftT!==prevT&&leftT<=10&&leftT>0) beep(leftT<=3?900:700,.07,'square',.04);
+    if(leftT===10&&prevT===11){ roundMsg='¡10 SEGUNDOS!'; roundMsgT=1.5; }
+    if(roundTime>=ROUND_MAX&&!(NET.inGame&&!NET.host)) timeUpRound();
   }
   if(state==='practice'){ updatePlayer(dt); updateDummies(dt); updateThrows(dt); }
   if(state==='play'||state==='roundEnd'||state==='practice'){ updateEffects(dt);
@@ -2158,6 +2161,13 @@ function killed(f,by,wid,fromNet){
   state='roundEnd'; roundMsg=blue?'¡RONDA PARA TU EQUIPO!':'LOS RIVALES GANAN LA RONDA'; roundMsgT=2.2;
   setTimeout(()=>{ if(state!=='roundEnd') return; if(score.p>=5||score.b>=5) endMatch(); else startRound(); },2200);
 }
+function timeUpRound(){
+  const alive=t=>fighters.filter(x=>x.team===t&&!x.dead), hp=t=>alive(t).reduce((a,f)=>a+Math.max(0,f.hp),0);
+  const a0=alive(0).length, a1=alive(1).length; let win=a0>a1?0:a1>a0?1:hp(0)>hp(1)?0:hp(1)>hp(0)?1:-1;
+  if(NET.inGame){ if(win===0) score.p++; else if(win===1) score.b++; netSend({t:'round',win,sc:[score.p,score.b]}); netRoundEnd(win); return; }
+  if(win===0){ score.p++; addStat('rounds'); } else if(win===1) score.b++;
+  state='roundEnd'; roundMsg=win<0?'⏱️ ¡TIEMPO! EMPATE':win===0?'⏱️ ¡TIEMPO! RONDA PARA TU EQUIPO':'⏱️ ¡TIEMPO! LOS RIVALES GANAN LA RONDA'; roundMsgT=2.4;
+  setTimeout(()=>{ if(state!=='roundEnd') return; if(score.p>=5||score.b>=5) endMatch(); else startRound(); },2400); }
 function endMatch(){
   state='over'; releaseLock();
   const win=NET.inGame?(player.team===0?score.p>score.b:score.b>score.p):score.p>score.b;
@@ -2411,7 +2421,11 @@ function drawGlobalHUD(){
   hx.textAlign='center'; hx.font='800 36px Rubik';
   hx.fillStyle='#4fd1ff'; hx.fillText(score.p,cx-34,52); hx.fillStyle='#ff6b7f'; hx.fillText(score.b,cx+34,52);
   hx.fillStyle='rgba(255,255,255,.75)'; hx.font='800 18px Rubik'; hx.fillText('–',cx,48);
-  hx.font='500 10px Rubik'; hx.fillStyle='rgba(255,255,255,.7)'; hx.fillText('primero a 5',cx,80);
+  { const left=Math.max(0,ROUND_MAX-(state==='countdown'?0:roundTime)), m=Math.floor(left/60), sec=Math.ceil(left%60)===60?0:Math.ceil(left)%60, low=left<=10&&state==='play';
+    const txt=m+':'+String(Math.ceil(left)-m*60>=60?0:Math.ceil(left)-m*60).padStart(2,'0');
+    hx.fillStyle=low?'rgba(200,30,40,.85)':'rgba(10,12,24,.6)'; hx.beginPath(); hx.roundRect?hx.roundRect(cx-34,70,68,26,8):hx.rect(cx-34,70,68,26); hx.fill();
+    hx.font='800 18px Rubik'; hx.fillStyle=low&&Math.sin(performance.now()/120)>0?'#ffd84f':'#fff'; hx.fillText('⏱ '+txt,cx,90);
+    hx.font='500 10px Rubik'; hx.fillStyle='rgba(255,255,255,.7)'; hx.fillText('primero a 5',cx,108); }
   // caras de tu equipo (izquierda) y de los rivales (derecha)
   const blue=fighters.filter(f=>f.team===0), red=fighters.filter(f=>f.team===1);
   blue.forEach((f,i)=>drawPortrait(f,cx-70-(i+1)*(sz+gap),10,sz));
@@ -3168,8 +3182,8 @@ function netStartRound(){
   for(const b of bullets) if(b.mesh) b.mesh.visible=false; for(const t of throws) scene.remove(t.mesh); clearEffects();
   bullets=[]; throws=[]; for(const q of particles) q.mesh.visible=false; particles=[]; texts=[]; clearDebris();
   countdown=3; state='countdown'; roundTime=0; suddenShown=false; }
-function netRoundEnd(win){ const mine=win===player.team; if(mine) addStat('rounds');
-  state='roundEnd'; roundMsg=mine?'¡RONDA PARA TU EQUIPO!':'LOS RIVALES GANAN LA RONDA'; roundMsgT=2.2;
+function netRoundEnd(win){ const mine=win===player.team; if(mine) addStat('rounds'); const tUp=roundTime>=ROUND_MAX-.5;
+  state='roundEnd'; roundMsg=(tUp?'⏱️ ¡TIEMPO! ':'')+(win<0?'EMPATE':mine?'RONDA PARA TU EQUIPO':'LOS RIVALES GANAN LA RONDA'); roundMsgT=2.2;
   setTimeout(()=>{ if(state!=='roundEnd'||!NET.inGame) return; if(score.p>=5||score.b>=5){ endMatch(); $('again').classList.add('hidden'); $('toMenu').textContent='Volver a la sala'; } else netStartRound(); },2200); }
 function netById(id){ return fighters.find(f=>f.netId===id); }
 function netOnData(raw,fromConn){ NET.rx=(NET.rx||0)+1; let m; try{ m=typeof raw==='string'?JSON.parse(raw):raw; }catch(e){ return; }

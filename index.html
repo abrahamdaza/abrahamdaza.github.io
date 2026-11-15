@@ -5289,7 +5289,10 @@ let chatOpenFlag=false;
 function chatOpen(){ chatOpenFlag=true; for(const k in keys) keys[k]=false; for(const k in codes) codes[k]=false; mouse.down=false; const b=$('chatBox'); b.classList.add('open'); if(!TOUCH) releaseLock(); setTimeout(()=>$('chatIn').focus(),30); }
 function chatClose(){ chatOpenFlag=false; $('chatBox').classList.remove('open'); $('chatIn').blur(); if(NET.inGame&&!TOUCH&&(state==='play'||state==='countdown'||state==='roundEnd')) requestLock(); }
 function chatSend(){ const t=$('chatIn').value.trim().slice(0,120); $('chatIn').value=''; if(t&&NET.on&&!NET.players.some(p=>isFriend(p.id))){ chatSys(T('Agrega amigos en la sala (➕ Amigo) para hablar. Máximo 2.')); chatClose(); return; } if(t&&NET.on){ const me=netMe(); const c=player?player.color:'#ffd84f'; netSend({t:'chat',n:me.name,txt:t,c}); chatAdd(me.name,t,c); } chatClose(); }
-function chatAdd(name,txt,color){ const log=$('chatLog'), d=document.createElement('div'), b=document.createElement('b'); b.textContent=name+':'; b.style.color=color||'#ffd84f';
+// filtro de groserías del chat (español e inglés): las cambia por asteriscos
+const CHAT_BAD=/(hijue?p\w*|malparid\w*|gonorr\w*|pirob\w*|careverg\w*|verg\w*|put[ao]s?|putic\w*|mierd\w*|marica\w*|maric[oó]n\w*|pendej\w*|culer\w*|cul[oe]s?\b|chimb\w*|coñ\w*|cabr[oó]n\w*|zorr[ao]s?|perr[ao] hijue\w*|idiot\w*|estúpid\w*|imbécil\w*|f+u+c+k+\w*|sh+i+t+\w*|b+i+t+c+h+\w*|a+s+s+h+o+l+e+\w*|d+i+c+k+\w*|p+u+s+s+y+\w*|c+u+n+t+\w*|n+i+g+g+\w*|f+a+g+\w*|retard\w*|wh+o+r+e+\w*|sl+u+t+\w*|porn\w*|sex\w*|nazi\w*|hitler\w*|kys\b|kill yourself|matate|suicid\w*)/gi;
+function cleanChat(t){ return String(t).replace(CHAT_BAD,m=>'*'.repeat(m.length)); }
+function chatAdd(name,txt,color){ txt=cleanChat(txt); name=cleanChat(name); const log=$('chatLog'), d=document.createElement('div'), b=document.createElement('b'); b.textContent=name+':'; b.style.color=color||'#ffd84f';
   d.appendChild(b); d.appendChild(document.createTextNode(txt)); log.appendChild(d); while(log.children.length>8) log.removeChild(log.firstChild);
   setTimeout(()=>d.classList.add('old'),9000); beep(1200,.04,'sine',.03); }
 function chatSys(txt){ chatAdd('📢',txt,'#9fe6ff'); }

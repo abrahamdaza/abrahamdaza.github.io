@@ -5586,7 +5586,7 @@ function playIntroJingle(){ if(introPlayed) return; initAudio(); if(!ac) return;
 // los navegadores solo dejan sonar después de tocar o pulsar algo: suena con lo primero que haga el jugador
 addEventListener('pointerdown',()=>{ if(state==='menu') playIntroJingle(); },{once:true,capture:true});
 addEventListener('keydown',()=>{ if(state==='menu') playIntroJingle(); },{once:true,capture:true});
-setTimeout(()=>{ try{ playIntroJingle(); }catch(e){} },400);
+setTimeout(()=>{ try{ if(navigator.userActivation&&navigator.userActivation.hasBeenActive) playIntroJingle(); }catch(e){} },400);   // solo si ya hubo un toque (el navegador no deja sonar antes)
 function buildCover(){
   coverGroup.clear(); coverFigs=[];
   // la portada ya no tiene personajes: solo el paisaje y el nombre del juego

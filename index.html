@@ -4555,7 +4555,7 @@ function buildLobby(){
     const mat=new THREE.Mesh(new THREE.PlaneGeometry(2.4,4.4),new THREE.MeshStandardMaterial({color:0x8a1a1a,map:GTEX.stipple,roughness:.9})); mat.rotation.x=-Math.PI/2; mat.position.set(toX(0)+1.4,.02,toZ(523)); lobbyGroup.add(mat);
     makeAutoDoor(lobbyGroup,toX(0)-.1,toZ(523),0,523); }
   // pantalla de anuncios (lado izquierdo)
-  { const ab=makeAdBoard(); ab.position.set(toX(48),0,toZ(250)); ab.rotation.y=Math.PI/2; lobbyGroup.add(ab); }
+  if(!window.NO_ADBOARD){ const ab=makeAdBoard(); ab.position.set(toX(48),0,toZ(250)); ab.rotation.y=Math.PI/2; lobbyGroup.add(ab); }
   // tablero de los 20 mejores (lado derecho)
   if(!window.NO_RANK){ const rb=makeRankBoard(); rb.position.set(toX(1150),0,toZ(560)); rb.rotation.y=-Math.PI/2; lobbyGroup.add(rb); }
   // kioscos
@@ -4580,7 +4580,7 @@ function goLobby(){
   if(!profile.guideSeen){ uiOpen=true; releaseLock(); $('guide').classList.remove('hidden'); } else requestLock();
 }
 function closeGuide(){ $('guide').classList.add('hidden'); profile.guideSeen=true; saveProfile(); uiOpen=false; requestLock(); }
-function nearKiosk(){ let best=null, bd=110; for(const k of KIOSKS){ if(k.id==='rank'&&window.NO_RANK) continue; const d=Math.hypot(player.x-k.x,player.y-k.y); if(d<bd){bd=d;best=k;} } return best; }
+function nearKiosk(){ let best=null, bd=110; for(const k of KIOSKS){ if(k.id==='rank'&&window.NO_RANK) continue; if(k.id==='ad'&&window.NO_ADBOARD) continue; const d=Math.hypot(player.x-k.x,player.y-k.y); if(d<bd){bd=d;best=k;} } return best; }
 function lobbyInteract(){
   const k=nearKiosk(); if(!k) return;
   beep(700,.06,'triangle',.05);
